@@ -1,0 +1,97 @@
+import { AIError, type Complete } from "./client";
+import { apportion } from "../tables/apportion";
+import { type ParsedEntry, VALID_DICE, parseTable } from "../tables/parse";
+
+export const TABLE_SYSTEM =
+  "You generate Dungeons & Dragons random tables in a specific text format.\n" +
+  "Output ONLY the table body — no code fences, no numbering, no preamble, no commentary, no blank lines.\n" +
+  "Format:\n" +
+  "- The FIRST line must be `die: dN`, where N is one of 4, 6, 8, 10, 12, 20, 100.\n" +
+  "- Then one outcome per line.\n" +
+  "- Pick a die whose face count is at least the number of outcomes you write (e.g. 9 outcomes needs d10 or larger).\n" +
+  "- Prefix an outcome with `Nx ` (e.g. `3x Bandits`) to make it N times more likely; leave rare results unprefixed.\n" +
+  "- Use [[wikilinks]] for places or NPCs when natural.\n" +
+  "Example:\n" +
+  "die: d8\n3x Goblin scouts\n2x A wolf pack\nA [[Redbrand]] patrol\nAn abandoned cart\nA lost child\nNothing";
+
+/** Wrap a bare azer-table body in the fenced ```azer-table code block the renderer reads. */
+export function fencedAzerTable(body: string): string {
+  return "```azer-table\n" + body.trim() + "\n```\n";
+}
+
+/** Strip a surrounding markdown code fence the model sometimes adds despite instructions (CRLF-safe). */
+export function sanitizeTableBody(text: string): string {
+  const t = text.trim();
+  const fenced = t.match(/^```[^\r\n]*\r?\n([\s\S]*?)\r?\n```$/);
+  return (fenced ? fenced[1] : t).trim();
+}
+
+/**
+ * Returns `current` if it already fits `entryCount`; otherwise the smallest die
+ * in VALID_DICE whose face count is ≥ `entryCount`. Returns `null` when
+ * `entryCount > 100` (no standard die fits).
+ */
+export function chooseDie(current: number, entryCount: number): number | null {
+  if (current >= entryCount) return current;
+  for (const d of VALID_DICE) {
+    if (d >= entryCount) return d;
+  }
+  return null;
+}
+
+function renderBody(die: number, entries: readonly ParsedEntry[]): string {
+  const lines = entries.map((e) => {
+    if (e.weight > 1) return `${e.weight}x ${e.text}`;
+    // Guard a weight-1 entry whose text literally starts with an `Nx ` prefix,
+    // so re-parsing the rendered body doesn't reinterpret it as a weight.
+    return /^\d+x\s/.test(e.text) ? `1x ${e.text}` : e.text;
+  });
+  return `die: d${die}\n${lines.join("\n")}`;
+}
+
+type RepairResult = { ok: true; body: string } | { ok: false; error: string };
+
+/**
+ * Sanitize the model output, parse it, bump a too-small die up to one that fits
+ * the entry count, and re-render a clean, validated azer-table body. Only
+ * genuinely malformed output (unknown/duplicate die, no entries, >100 entries)
+ * fails — a die that's merely too small for the entries is repaired, not rejected.
+ */
+function repairTable(text: string): RepairResult {
+  const parsed = parseTable(sanitizeTableBody(text));
+  if (!parsed.ok) return { ok: false, error: parsed.error };
+
+  const die = chooseDie(parsed.table.die, parsed.table.entries.length);
+  if (die === null) {
+    return { ok: false, error: `too many entries (${parsed.table.entries.length}) for the largest die (d100)` };
+  }
+
+  const body = renderBody(die, parsed.table.entries);
+  // Re-validate the rendered body end-to-end (catches e.g. an entry whose text
+  // is itself a `die:` line, which would make the reconstruction ambiguous).
+  const recheck = parseTable(body);
+  if (!recheck.ok) return { ok: false, error: recheck.error };
+  const fit = apportion(
+    recheck.table.die,
+    recheck.table.entries.map((e) => e.weight),
+  );
+  return fit.ok ? { ok: true, body } : { ok: false, error: fit.error };
+}
+
+/**
+ * Ask the model for a random table body and turn it into a valid azer-table body
+ * via {@link repairTable}. One retry with the error fed back; otherwise fail hard
+ * so a malformed table never lands.
+ */
+export async function generateTable(complete: Complete, prompt: string): Promise<string> {
+  const user = `Generate a random table about: ${prompt}`;
+
+  const first = repairTable(await complete(TABLE_SYSTEM, user));
+  if (first.ok) return first.body;
+
+  const retryUser = `${user}\n\nThe previous output was invalid: ${first.error}. Return a corrected table body, nothing else.`;
+  const second = repairTable(await complete(TABLE_SYSTEM, retryUser));
+  if (second.ok) return second.body;
+
+  throw new AIError(`The model returned an invalid table twice. Last error: ${second.error}`);
+}

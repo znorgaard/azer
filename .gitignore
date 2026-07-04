@@ -1,0 +1,12 @@
+# Node / build artifacts
+node_modules/
+main.js
+*.js.map
+data.json
+
+# Local tooling / scratch
+.superpowers/
+.claude/
+
+# Local sample campaign (not part of the plugin)
+demo-campaign/
