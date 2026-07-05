@@ -49,7 +49,7 @@ export function registerAiCommands(plugin: AzerPlugin): void {
   };
 
   plugin.addCommand({
-    id: "azer-generate-table",
+    id: "generate-table",
     name: "Generate Table (AI)",
     callback: () => {
       if (!requireKey()) return;
@@ -72,7 +72,7 @@ export function registerAiCommands(plugin: AzerPlugin): void {
   });
 
   plugin.addCommand({
-    id: "azer-recap-sessions",
+    id: "recap-sessions",
     name: "Recap Recent Sessions (AI)",
     callback: () => {
       if (!requireKey()) return;

@@ -61,3 +61,30 @@ out of the Obsidian runtime so it can be unit-tested with fakes:
   directly, so it stays testable.
 - `tests/` mirrors `src/`; follow TDD — write the failing test first.
 - The API key lives on-device only and is never synced.
+
+## Obsidian submission guidelines
+
+Azer targets the community-plugin directory. Hold new code to Obsidian's
+[review guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines)
+so submission stays a formality:
+
+- **No raw HTML injection** — never `innerHTML`/`outerHTML`/`insertAdjacentHTML`
+  with dynamic content; build UI with `createEl`/`createDiv`, clear with
+  `el.empty()`.
+- **Auto-cleanup** — register everything via `registerEvent`/`addCommand` so it
+  unloads cleanly. Don't detach leaves in `onunload()`.
+- **`this.app`**, never the global `app` (debug-only).
+- **Vault API over Adapter**; `normalizePath()` on all user-supplied paths;
+  `FileManager.processFrontMatter()` for YAML edits; Editor API for the active
+  note.
+- **UI text is sentence case.** Use `setHeading()`; no "settings" in section
+  headings (prefer "Advanced").
+- **Command IDs** must not repeat the plugin id — Obsidian prefixes `azer:`
+  automatically.
+- **`isDesktopOnly`** must be `true` if any code path uses Node/Electron APIs
+  (`fs`, `crypto`, `os`, `https`). Audit `src/ai/` before flipping this.
+- **Manifest description** ≤250 chars, ends with a period, no emoji, doesn't
+  start with "This is a plugin". Drop `fundingUrl` unless donations are taken.
+- **Release** = GitHub release whose tag equals `manifest.json` `version`
+  (no `v` prefix), with `main.js`, `manifest.json`, and `styles.css` attached as
+  individual assets. The directory reads `manifest.json` from the default branch.

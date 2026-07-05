@@ -22,7 +22,7 @@ export default class AzerPlugin extends Plugin {
     for (const type of ALL_TYPES) {
       const schema = getSchema(type);
       this.addCommand({
-        id: `azer-new-${type}`,
+        id: `new-${type}`,
         name: `New ${schema.label}`,
         callback: () => void this.newNote(type),
       });
