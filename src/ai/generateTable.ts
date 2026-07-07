@@ -61,7 +61,8 @@ function repairTable(text: string): RepairResult {
   const parsed = parseTable(sanitizeTableBody(text));
   if (!parsed.ok) return { ok: false, error: parsed.error };
 
-  const die = chooseDie(parsed.table.die, parsed.table.entries.length);
+  // AI tables are single-die (see TABLE_SYSTEM); a stray pool normalizes to its face count.
+  const die = chooseDie(parsed.table.die.m, parsed.table.entries.length);
   if (die === null) {
     return { ok: false, error: `too many entries (${parsed.table.entries.length}) for the largest die (d100)` };
   }
@@ -72,7 +73,7 @@ function repairTable(text: string): RepairResult {
   const recheck = parseTable(body);
   if (!recheck.ok) return { ok: false, error: recheck.error };
   const fit = apportion(
-    recheck.table.die,
+    recheck.table.die.m,
     recheck.table.entries.map((e) => e.weight),
   );
   return fit.ok ? { ok: true, body } : { ok: false, error: fit.error };

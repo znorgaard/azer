@@ -29,7 +29,7 @@ function expectValid(body: string): void {
   expect(parsed.ok, parsed.ok ? "" : parsed.error).toBe(true);
   if (parsed.ok) {
     const fit = apportion(
-      parsed.table.die,
+      parsed.table.die.m,
       parsed.table.entries.map((e) => e.weight),
     );
     expect(fit.ok, fit.ok ? "" : fit.error).toBe(true);

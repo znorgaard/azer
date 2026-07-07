@@ -53,6 +53,77 @@ export function apportion(die: number, weights: readonly number[]): ApportionRes
   return { ok: true, ranges };
 }
 
+/**
+ * Ways to roll each sum of `n` dice of `m` faces, indexed by sum from the
+ * minimum (`n`) up. `combos(2, 6)[0]` is the ways to roll a 2 (one), the peak
+ * is the median sum. The total across the array is `m ** n`.
+ */
+export function combos(n: number, m: number): number[] {
+  let ways = [1]; // zero dice: one way to roll a sum of 0
+  for (let d = 0; d < n; d++) {
+    const next = new Array<number>(ways.length + m - 1).fill(0);
+    for (let i = 0; i < ways.length; i++) {
+      for (let face = 1; face <= m; face++) next[i + face - 1] += ways[i];
+    }
+    ways = next;
+  }
+  return ways;
+}
+
+/**
+ * Assign entries to contiguous bands of a dice pool's sum axis, weighted by the
+ * probability mass of each sum (not an even spread) — so an entry's share of
+ * the bell curve tracks its weight. Each entry gets >=1 distinct sum;
+ * `ranges[i]` (in sum values, e.g. 2..12 for 2d6) corresponds to `weights[i]`.
+ */
+export function apportionPool(
+  n: number,
+  m: number,
+  weights: readonly number[],
+): ApportionResult {
+  const nEntries = weights.length;
+  if (nEntries === 0) return { ok: false, error: "This table has no entries." };
+
+  const c = combos(n, m);
+  const K = c.length; // number of distinct sums
+  if (K < nEntries) {
+    return {
+      ok: false,
+      error: `A ${n}d${m} has only ${K} possible results but this table has ${nEntries} entries — use fewer entries or a wider pool.`,
+    };
+  }
+
+  const total = c.reduce((a, b) => a + b, 0);
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  const prefixMass: number[] = [];
+  let acc = 0;
+  for (const ways of c) prefixMass.push((acc += ways)); // prefixMass[j] = mass of sums 0..j
+
+  const min = n; // sum index 0 is a roll of `n`
+  const ranges: FaceRange[] = [];
+  let prev = -1; // last sum index already consumed
+  let cumWeight = 0;
+  for (let i = 0; i < nEntries; i++) {
+    cumWeight += weights[i];
+    let e: number;
+    if (i === nEntries - 1) {
+      e = K - 1; // the last entry mops up the tail
+    } else {
+      // Smallest sum index whose cumulative mass reaches this entry's target
+      // share. ponytail: float target is fine — the mass is integer, and any
+      // rounding wobble only shifts a boundary by one sum on absurd pools.
+      const target = (total * cumWeight) / totalWeight;
+      let j = prev + 1;
+      while (j < K - 1 && prefixMass[j] < target) j++;
+      const maxE = K - 1 - (nEntries - 1 - i); // reserve one sum per later entry
+      e = Math.min(j, maxE);
+    }
+    ranges.push({ start: min + prev + 1, end: min + e });
+    prev = e;
+  }
+  return { ok: true, ranges };
+}
+
 /** Format a face range for display (two-digit on d100). */
 export function formatRange(range: FaceRange, die: number): string {
   const fmt = (face: number): string =>

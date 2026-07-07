@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { apportion, formatRange, type FaceRange } from "../src/tables/apportion";
+import {
+  apportion,
+  apportionPool,
+  combos,
+  formatRange,
+  type FaceRange,
+} from "../src/tables/apportion";
 
 function ranges(die: number, weights: number[]): readonly FaceRange[] {
   const r = apportion(die, weights);
@@ -92,5 +98,51 @@ describe("apportion", () => {
     expect(formatRange({ start: 1, end: 5 }, 20)).toBe("1–5");
     expect(formatRange({ start: 1, end: 6 }, 100)).toBe("01–06");
     expect(formatRange({ start: 100, end: 100 }, 100)).toBe("100");
+  });
+});
+
+function poolRanges(n: number, m: number, weights: number[]): readonly FaceRange[] {
+  const r = apportionPool(n, m, weights);
+  if (!r.ok) throw new Error(`expected ok, got: ${r.error}`);
+  return r.ranges;
+}
+
+describe("combos", () => {
+  it("counts the ways to roll each sum of a pool", () => {
+    expect(combos(2, 6)).toEqual([1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1]); // sums 2..12, total 36
+    expect(combos(1, 6)).toEqual([1, 1, 1, 1, 1, 1]); // a lone die is uniform
+    expect(combos(3, 6).reduce((a, b) => a + b, 0)).toBe(216); // total ways == m^n
+  });
+});
+
+describe("apportionPool", () => {
+  it("splits ranges over the sum axis, weighted toward the likely middle (2d6, 1/1)", () => {
+    // Equal weights on 2d6: the boundary snaps just past the median sum (7), so
+    // the low band ends at 7 rather than a naive even 2–6/7–12 split.
+    expect(poolRanges(2, 6, [1, 1])).toEqual([
+      { start: 2, end: 7 },
+      { start: 8, end: 12 },
+    ]);
+  });
+
+  it("gives every distinct sum its own row when entries == possible sums (2d6)", () => {
+    expect(poolRanges(2, 6, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])).toEqual(
+      [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((s) => ({ start: s, end: s })),
+    );
+  });
+
+  it("produces contiguous ranges covering the whole pool with no gaps", () => {
+    const r = poolRanges(3, 6, [3, 1, 4, 1, 5]);
+    expect(r[0].start).toBe(3); // min sum of 3d6
+    expect(r[r.length - 1].end).toBe(18); // max sum of 3d6
+    for (let i = 1; i < r.length; i++) {
+      expect(r[i].start).toBe(r[i - 1].end + 1);
+    }
+  });
+
+  it("errors when there are more entries than possible sums", () => {
+    const r = apportionPool(2, 6, new Array(12).fill(1)); // 2d6 has only 11 sums
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/only 11 possible results/);
   });
 });

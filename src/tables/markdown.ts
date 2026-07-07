@@ -1,4 +1,4 @@
-import { apportion, formatRange } from "./apportion";
+import { apportion, apportionPool, formatRange } from "./apportion";
 import { parseTable } from "./parse";
 
 /**
@@ -11,16 +11,19 @@ export function azerTableMarkdown(source: string): string {
   if (!parsed.ok) return warningCallout(parsed.error);
 
   const { die, entries } = parsed.table;
-  const result = apportion(
-    die,
-    entries.map((e) => e.weight),
-  );
+  const weights = entries.map((e) => e.weight);
+  const result =
+    die.n === 1 ? apportion(die.m, weights) : apportionPool(die.n, die.m, weights);
   if (!result.ok) return warningCallout(result.error);
 
+  const label = die.n === 1 ? `d${die.m}` : `${die.n}d${die.m}`;
+  // Single-die ranges are die faces (pass die.m so d100 pads); pool ranges are
+  // sum values that never need padding, so pass 0 to skip it.
+  const padDie = die.n === 1 ? die.m : 0;
   const rows = entries.map(
-    (e, i) => `| ${formatRange(result.ranges[i], die)} | ${escapeCell(e.text)} |`,
+    (e, i) => `| ${formatRange(result.ranges[i], padDie)} | ${escapeCell(e.text)} |`,
   );
-  return [`| Roll (d${die}) | Result |`, "| --- | --- |", ...rows].join("\n");
+  return [`| Roll (${label}) | Result |`, "| --- | --- |", ...rows].join("\n");
 }
 
 function warningCallout(message: string): string {
