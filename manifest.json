@@ -1,7 +1,7 @@
 {
   "id": "azer",
   "name": "Azer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "1.5.0",
   "description": "D&D session toolkit: create typed campaign notes (NPCs, sessions, adventure logs, locations, PCs) with wikilink cross-references, roll on dice tables, and generate tables and session recaps with AI.",
   "author": "Zach Norgaard",
