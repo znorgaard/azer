@@ -112,6 +112,8 @@ export function apportionPool(
       // Cut at the sum index whose cumulative mass lands *closest* to this
       // entry's target share — so equal weights split the bell curve evenly
       // (2d6 → 2–6/7–12) rather than always overshooting the median.
+      // Note: ties round *down* here (toward the earlier entry), the opposite
+      // of `apportion`, which hands a leftover face to the *later* entry.
       // ponytail: float target is fine — the mass is integer, and any rounding
       // wobble only shifts a boundary by one sum on absurd pools.
       const target = (total * cumWeight) / totalWeight;

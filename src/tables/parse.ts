@@ -30,7 +30,8 @@ const DIE_VALUE = /^(\d*)d(\d+)$/; // optional dice count, then dN — "d20" or 
 const WEIGHT_PREFIX = /^(\d+)x\s+(.+)$/;
 
 // A real table never pools more than a few dice; cap `n` so a typo like
-// `die: 200000d20` can't drive combos() into O(n²) work on the render thread.
+// `die: 200000d20` can't drive combos() into unbounded work on the render
+// thread (its cost grows with both the dice count and the widening sum axis).
 const MAX_POOL_DICE = 100;
 
 /** Parse a die token (`d20`, `2d6`) into a spec, or null if malformed/non-standard. */
