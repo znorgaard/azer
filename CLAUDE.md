@@ -11,9 +11,10 @@ code in this repository.
   **Vitest** (tests). Node is required; there is no Python in this repo.
 - AI default model: `claude-opus-4-8`, adaptive thinking, user's own key,
   stored on-device only and never synced.
-- `Improvements.md` is the feature backlog. Per its `<!-- FOR AGENTS -->`
-  header, remove an item only after implementing it *and* getting user
-  acceptance.
+- The feature backlog lives in `docs/superpowers/Improvements.md` — workflow
+  scratch, git-ignored, not part of project history. Per its
+  `<!-- FOR AGENTS -->` header, remove an item only after implementing it *and*
+  getting user acceptance.
 - This project is pre-alpha. Any and all breaking changes are permitted.
 
 ## Commands

@@ -1,4 +1,4 @@
-import { apportion, formatRange } from "./apportion";
+import { apportion, apportionPool, formatRange } from "./apportion";
 import { parseTable } from "./parse";
 
 /**
@@ -11,16 +11,18 @@ export function azerTableMarkdown(source: string): string {
   if (!parsed.ok) return warningCallout(parsed.error);
 
   const { die, entries } = parsed.table;
-  const result = apportion(
-    die,
-    entries.map((e) => e.weight),
-  );
+  const weights = entries.map((e) => e.weight);
+  const result =
+    die.n === 1 ? apportion(die.m, weights) : apportionPool(die.n, die.m, weights);
   if (!result.ok) return warningCallout(result.error);
 
+  const label = die.n === 1 ? `d${die.m}` : `${die.n}d${die.m}`;
+  // Pad only percentile d100 faces (01–09); pool sums never need it.
+  const pad = die.n === 1 && die.m === 100;
   const rows = entries.map(
-    (e, i) => `| ${formatRange(result.ranges[i], die)} | ${escapeCell(e.text)} |`,
+    (e, i) => `| ${formatRange(result.ranges[i], pad)} | ${escapeCell(e.text)} |`,
   );
-  return [`| Roll (d${die}) | Result |`, "| --- | --- |", ...rows].join("\n");
+  return [`| Roll (${label}) | Result |`, "| --- | --- |", ...rows].join("\n");
 }
 
 function warningCallout(message: string): string {

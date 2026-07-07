@@ -18,6 +18,12 @@ describe("azerTableMarkdown", () => {
     );
   });
 
+  it("renders a dice-pool table with a pool-labeled header", () => {
+    expect(azerTableMarkdown("die: 2d6\nA\nB")).toBe(
+      "| Roll (2d6) | Result |\n| --- | --- |\n| 2–6 | A |\n| 7–12 | B |",
+    );
+  });
+
   it("renders a warning callout for a die that is too small", () => {
     const md = azerTableMarkdown("die: d4\nA\nB\nC\nD\nE");
     expect(md).toMatch(/^> \[!warning\]/);

@@ -52,14 +52,18 @@ table.
 Inside the block:
 
 - `die: dN` — optional; sets the die to one of `d4, d6, d8, d10, d12, d20, d100`.
-  Omit it to default to **d20**. Declare it at most once.
+  Omit it to default to **d20**. Declare it at most once. You can also roll a
+  **pool** — `die: 2d6`, `die: 3d10` — where the middle sums are more likely
+  than the extremes.
 - Every other non-blank line is one result. Prefix a line with `Nx ` (e.g.
   `3x Goblin ambush`) to weight it.
 - A result can be a `[[wikilink]]` — e.g. to nest another table.
 
 Azer gives every entry at least one die face, then shares the remaining faces out
-in proportion to the weights, and renders a `Roll → Result` lookup. The one error
-it rejects is declaring **more entries than the die has faces** — use a bigger die.
+in proportion to the weights, and renders a `Roll → Result` lookup. For a **pool**
+it splits the sum range (`2–12` for 2d6) by each sum's probability, so an entry's
+share of the bell curve tracks its weight. The one error it rejects is declaring
+**more entries than there are possible results** — use a bigger die or wider pool.
 
 ### Example
 
@@ -82,6 +86,24 @@ No fish near lighthouse
 
 Weights bias the split rather than setting exact face counts: each entry keeps at
 least one face, so `4x` here takes 15 of the 20 faces, not all of them.
+
+A pool splits by probability, not by an even spread — the boundary lands where
+the bell curve's mass is closest to each entry's share. With `die: 2d6` and two
+equal entries the low band is `2–6` (just under half the mass), so the likelier
+middle rolls aren't lumped entirely into one entry:
+
+````markdown
+```azer-table
+die: 2d6
+A quiet watch
+An ambush
+```
+````
+
+| Roll (2d6) | Result |
+| --- | --- |
+| 2–6 | A quiet watch |
+| 7–12 | An ambush |
 
 ## AI features & your API key
 
