@@ -21,7 +21,7 @@ export function planFrontmatter(
   const additions: Record<string, unknown> = { [AZER_TYPE_KEY]: schema.azerType };
   for (const field of schema.fields) {
     if (!Object.hasOwn(existing, field.key)) {
-      additions[field.key] = Array.isArray(field.default) ? [...field.default] : field.default;
+      additions[field.key] = typeof field.default === "string" ? field.default : [...field.default];
     }
   }
   return additions;

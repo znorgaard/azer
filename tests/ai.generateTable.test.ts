@@ -16,9 +16,9 @@ const DIE_ENTRY = "die: d4\n1x die: roll for poison";
 /** A fake Complete that returns queued responses and records the prompts seen. */
 function fakeComplete(responses: string[]) {
   const users: string[] = [];
-  const fn = async (_system: string, user: string) => {
+  const fn = (_system: string, user: string) => {
     users.push(user);
-    return responses.shift() ?? "";
+    return Promise.resolve(responses.shift() ?? "");
   };
   return { fn, users };
 }

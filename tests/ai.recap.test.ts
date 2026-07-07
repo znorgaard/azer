@@ -20,10 +20,10 @@ describe("recap", () => {
   it("sends the formatted notes to the model and returns its text", async () => {
     let seenSystem = "";
     let seenUser = "";
-    const complete = async (system: string, user: string) => {
+    const complete = (system: string, user: string) => {
       seenSystem = system;
       seenUser = user;
-      return "- Met Sildar\n- Cleared the hideout";
+      return Promise.resolve("- Met Sildar\n- Cleared the hideout");
     };
     const result = await recap(complete, notes);
     expect(result).toBe("- Met Sildar\n- Cleared the hideout");

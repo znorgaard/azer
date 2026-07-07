@@ -1,5 +1,5 @@
 import { type App, normalizePath, TFile, TFolder } from "obsidian";
-import type { NoteHandle, NotePorts } from "./ports";
+import type { NotePorts } from "./ports";
 
 /** Adapt the real Obsidian `App` to the `NotePorts` seam. */
 export function makeObsidianPorts(app: App): NotePorts {

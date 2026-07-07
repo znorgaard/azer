@@ -5,7 +5,7 @@ import { recap } from "../ai/recap";
 import { type AdventureLogNote, forCampaign, selectForRecap, stripFrontmatter } from "../notes/adventureLog";
 import { createTypedNote } from "./newNote";
 import { makeObsidianPorts } from "../obsidianPorts";
-import { folderFor, getApiKey, type LocalStorageApp, typeFolderNames } from "../settings";
+import { folderFor, getApiKey, typeFolderNames } from "../settings";
 import { getSchema } from "../schema/types";
 import { AZER_TYPE_KEY } from "../schema/frontmatter";
 import type { NotePorts } from "../ports";
@@ -33,7 +33,7 @@ export function registerAiCommands(plugin: AzerPlugin): void {
   // Reads apiKey/model/maxTokens fresh on every call (inside the closure).
   const ask: Complete = (system, user) =>
     complete(obsidianFetch, {
-      apiKey: getApiKey(plugin.app as unknown as LocalStorageApp),
+      apiKey: getApiKey(plugin.app),
       model: plugin.settings.model,
       system,
       user,
@@ -41,7 +41,7 @@ export function registerAiCommands(plugin: AzerPlugin): void {
     });
 
   const requireKey = (): boolean => {
-    if (getApiKey(plugin.app as unknown as LocalStorageApp).trim() === "") {
+    if (getApiKey(plugin.app).trim() === "") {
       new Notice("Set your Anthropic API key in Azer settings to use AI features.");
       return false;
     }
@@ -133,7 +133,7 @@ async function gatherAdventureLog(app: App): Promise<AdventureLogNote[]> {
 function promptForTable(
   app: App,
   campaigns: PickerState,
-  done: (v: { name: string; prompt: string; campaign: string }) => void,
+  done: (v: { name: string; prompt: string; campaign: string }) => void | Promise<void>,
 ): void {
   new TablePromptModal(app, campaigns, done).open();
 }
@@ -145,7 +145,7 @@ class TablePromptModal extends Modal {
   constructor(
     app: App,
     private campaigns: PickerState,
-    private done: (v: { name: string; prompt: string; campaign: string }) => void,
+    private done: (v: { name: string; prompt: string; campaign: string }) => void | Promise<void>,
   ) {
     super(app);
   }
@@ -164,7 +164,7 @@ class TablePromptModal extends Modal {
         .onClick(() => {
           if (this.name.trim() === "" || this.prompt.trim() === "") return;
           this.close();
-          this.done({ name: this.name.trim(), prompt: this.prompt.trim(), campaign: campaignFromPick(this.getCampaign()) });
+          void this.done({ name: this.name.trim(), prompt: this.prompt.trim(), campaign: campaignFromPick(this.getCampaign()) });
         }),
     );
   }
@@ -176,7 +176,7 @@ class TablePromptModal extends Modal {
 function promptForRecap(
   app: App,
   campaigns: PickerState,
-  done: (v: { count: number; campaign: string }) => void,
+  done: (v: { count: number; campaign: string }) => void | Promise<void>,
 ): void {
   new RecapModal(app, campaigns, done).open();
 }
@@ -187,7 +187,7 @@ class RecapModal extends Modal {
   constructor(
     app: App,
     private campaigns: PickerState,
-    private done: (v: { count: number; campaign: string }) => void,
+    private done: (v: { count: number; campaign: string }) => void | Promise<void>,
   ) {
     super(app);
   }
@@ -207,7 +207,7 @@ class RecapModal extends Modal {
         .setCta()
         .onClick(() => {
           this.close();
-          this.done({ count: this.count, campaign: campaignFromPick(this.getCampaign()) });
+          void this.done({ count: this.count, campaign: campaignFromPick(this.getCampaign()) });
         }),
     );
   }

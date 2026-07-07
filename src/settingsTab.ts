@@ -1,6 +1,6 @@
 import { type App, PluginSettingTab, Setting } from "obsidian";
 import { ALL_TYPES, SCHEMAS } from "./schema/types";
-import { DEFAULT_SETTINGS, getApiKey, type LocalStorageApp, setApiKey } from "./settings";
+import { DEFAULT_SETTINGS, getApiKey, setApiKey } from "./settings";
 import type AzerPlugin from "./main";
 
 export class AzerSettingTab extends PluginSettingTab {
@@ -20,13 +20,12 @@ export class AzerSettingTab extends PluginSettingTab {
       .setDesc("Stored only on this device; set it on each machine. Used by the AI table and recap commands.")
       .addText((text) => {
         text.inputEl.type = "password";
-        // `loadLocalStorage`/`saveLocalStorage` are stable Obsidian App methods
-        // not in the public types, hence the narrow `as unknown as LocalStorageApp`
-        // cast. The key lives in device-local storage, never in synced `data.json`.
+        // The key lives in device-local storage (loadLocalStorage), never in
+        // synced `data.json`.
         text
           .setPlaceholder("sk-ant-...")
-          .setValue(getApiKey(this.app as unknown as LocalStorageApp))
-          .onChange((value) => setApiKey(this.app as unknown as LocalStorageApp, value));
+          .setValue(getApiKey(this.app))
+          .onChange((value) => setApiKey(this.app, value));
       });
 
     new Setting(containerEl).setName("Model").setDesc("Anthropic model for AI features.").addText((text) =>
