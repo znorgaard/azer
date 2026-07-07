@@ -20,7 +20,7 @@ describe("azerTableMarkdown", () => {
 
   it("renders a dice-pool table with a pool-labeled header", () => {
     expect(azerTableMarkdown("die: 2d6\nA\nB")).toBe(
-      "| Roll (2d6) | Result |\n| --- | --- |\n| 2–7 | A |\n| 8–12 | B |",
+      "| Roll (2d6) | Result |\n| --- | --- |\n| 2–6 | A |\n| 7–12 | B |",
     );
   });
 

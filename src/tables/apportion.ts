@@ -109,12 +109,20 @@ export function apportionPool(
     if (i === nEntries - 1) {
       e = K - 1; // the last entry mops up the tail
     } else {
-      // Smallest sum index whose cumulative mass reaches this entry's target
-      // share. ponytail: float target is fine — the mass is integer, and any
-      // rounding wobble only shifts a boundary by one sum on absurd pools.
+      // Cut at the sum index whose cumulative mass lands *closest* to this
+      // entry's target share — so equal weights split the bell curve evenly
+      // (2d6 → 2–6/7–12) rather than always overshooting the median.
+      // ponytail: float target is fine — the mass is integer, and any rounding
+      // wobble only shifts a boundary by one sum on absurd pools.
       const target = (total * cumWeight) / totalWeight;
       let j = prev + 1;
       while (j < K - 1 && prefixMass[j] < target) j++;
+      // j is the first index reaching/exceeding target; j-1 undershoots it.
+      // Prefer the nearer of the two (ties round down), but never below the
+      // entry's own first sum (prev + 1).
+      if (j > prev + 1 && target - prefixMass[j - 1] <= prefixMass[j] - target) {
+        j -= 1;
+      }
       const maxE = K - 1 - (nEntries - 1 - i); // reserve one sum per later entry
       e = Math.min(j, maxE);
     }
@@ -124,10 +132,10 @@ export function apportionPool(
   return { ok: true, ranges };
 }
 
-/** Format a face range for display (two-digit on d100). */
-export function formatRange(range: FaceRange, die: number): string {
+/** Format a face range for display; `pad` two-digit (percentile d100 reads 01–09). */
+export function formatRange(range: FaceRange, pad: boolean): string {
   const fmt = (face: number): string =>
-    die === 100 ? String(face).padStart(2, "0") : String(face);
+    pad ? String(face).padStart(2, "0") : String(face);
   return range.start === range.end
     ? fmt(range.start)
     : `${fmt(range.start)}–${fmt(range.end)}`;

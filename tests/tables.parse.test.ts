@@ -33,6 +33,7 @@ describe("parseTable", () => {
   it("parses a dice pool (2d6, 3d10)", () => {
     expect(ok("die: 2d6\nA\nB").die).toEqual({ n: 2, m: 6 });
     expect(ok("die: 3d10\nA").die).toEqual({ n: 3, m: 10 });
+    expect(ok("die: 100d6\nA").die).toEqual({ n: 100, m: 6 }); // pool count at the cap
   });
 
   it("rejects an unknown die value", () => {
@@ -41,6 +42,8 @@ describe("parseTable", () => {
     expect(err("die:\nX")).toMatch(/Unknown die/);
     expect(err("die: 2d7\nX")).toMatch(/Unknown die/); // pool with a non-standard face count
     expect(err("die: 0d6\nX")).toMatch(/Unknown die/); // pool must roll at least one die
+    expect(err("die: 101d6\nX")).toMatch(/Unknown die/); // pool count over the cap
+    expect(err("die: 200000d20\nX")).toMatch(/Unknown die/); // absurd pool can't reach combos()
   });
 
   it("rejects more than one die directive", () => {

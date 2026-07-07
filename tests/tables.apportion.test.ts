@@ -94,10 +94,10 @@ describe("apportion", () => {
   });
 
   it("formats single faces, bands, and two-digit d100", () => {
-    expect(formatRange({ start: 7, end: 7 }, 20)).toBe("7");
-    expect(formatRange({ start: 1, end: 5 }, 20)).toBe("1–5");
-    expect(formatRange({ start: 1, end: 6 }, 100)).toBe("01–06");
-    expect(formatRange({ start: 100, end: 100 }, 100)).toBe("100");
+    expect(formatRange({ start: 7, end: 7 }, false)).toBe("7");
+    expect(formatRange({ start: 1, end: 5 }, false)).toBe("1–5");
+    expect(formatRange({ start: 1, end: 6 }, true)).toBe("01–06");
+    expect(formatRange({ start: 100, end: 100 }, true)).toBe("100");
   });
 });
 
@@ -116,12 +116,21 @@ describe("combos", () => {
 });
 
 describe("apportionPool", () => {
-  it("splits ranges over the sum axis, weighted toward the likely middle (2d6, 1/1)", () => {
-    // Equal weights on 2d6: the boundary snaps just past the median sum (7), so
-    // the low band ends at 7 rather than a naive even 2–6/7–12 split.
+  it("splits the sum axis at the nearest mass boundary (2d6, 1/1)", () => {
+    // Equal weights on 2d6: target mass is 18/36. Sum 6 sits at 15/36 and sum 7
+    // at 21/36 — equidistant, so the tie rounds down to a 2–6 / 7–12 split.
     expect(poolRanges(2, 6, [1, 1])).toEqual([
-      { start: 2, end: 7 },
-      { start: 8, end: 12 },
+      { start: 2, end: 6 },
+      { start: 7, end: 12 },
+    ]);
+  });
+
+  it("biases the boundary toward a heavier entry (2d6, 3/1)", () => {
+    // target mass 27/36; sum 8 sits at 26/36 (nearer) vs sum 9 at 30/36, so the
+    // heavy first entry claims 2–8 and the light one gets the 9–12 tail.
+    expect(poolRanges(2, 6, [3, 1])).toEqual([
+      { start: 2, end: 8 },
+      { start: 9, end: 12 },
     ]);
   });
 

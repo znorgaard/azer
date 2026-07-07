@@ -29,13 +29,17 @@ const DIE_LINE = /^\s*die\s*:(.*)$/i;
 const DIE_VALUE = /^(\d*)d(\d+)$/; // optional dice count, then dN — "d20" or "2d6"
 const WEIGHT_PREFIX = /^(\d+)x\s+(.+)$/;
 
+// A real table never pools more than a few dice; cap `n` so a typo like
+// `die: 200000d20` can't drive combos() into O(n²) work on the render thread.
+const MAX_POOL_DICE = 100;
+
 /** Parse a die token (`d20`, `2d6`) into a spec, or null if malformed/non-standard. */
 function parseDieSpec(token: string): DieSpec | null {
   const vm = token.match(DIE_VALUE);
   if (!vm) return null;
   const n = vm[1] === "" ? 1 : Number(vm[1]);
   const m = Number(vm[2]);
-  if (!Number.isSafeInteger(n) || n < 1) return null;
+  if (!Number.isSafeInteger(n) || n < 1 || n > MAX_POOL_DICE) return null;
   if (!(VALID_DICE as readonly number[]).includes(m)) return null;
   return { n, m: m as Die };
 }

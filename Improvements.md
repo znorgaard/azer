@@ -22,10 +22,10 @@ alongside the built-ins.
 - Keep pure/testable: schema resolution stays in `src/schema`, UI in the
   settings tab.
 
-## Dice-pool tables (`2d6`, `3d6`)
+## Dice-pool tables (`2d6`, `3d10`)
 
 `azer-table` only accepts single uniform dice (`die: d20`). TTRPG tables often
-roll a pool — `2d6`, `3d6` — where the middle results are far more likely than
+roll a pool — `2d6`, `3d10` — where the middle results are far more likely than
 the extremes (reaction rolls, encounter tables). Support pools *correctly*: not
 DTC's even-spread, but weighted by each sum's probability.
 
@@ -35,4 +35,4 @@ DTC's even-spread, but weighted by each sum's probability.
   base weight is its combination-count).
 - Render ranges over the pool's min–max (`2–12` for `2d6`), header shows the
   pool notation.
-- Keep it pure/testable in `src/tables/`; add fixtures for `2d6`/`3d6`.
+- Keep it pure/testable in `src/tables/`; add fixtures for `2d6`/`3d10`.

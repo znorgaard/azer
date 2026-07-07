@@ -87,8 +87,10 @@ No fish near lighthouse
 Weights bias the split rather than setting exact face counts: each entry keeps at
 least one face, so `4x` here takes 15 of the 20 faces, not all of them.
 
-A pool splits by probability, not by an even spread — with `die: 2d6` and two
-equal entries, the low band ends at 7 (the median sum) rather than at 6:
+A pool splits by probability, not by an even spread — the boundary lands where
+the bell curve's mass is closest to each entry's share. With `die: 2d6` and two
+equal entries the low band is `2–6` (just under half the mass), so the likelier
+middle rolls aren't lumped entirely into one entry:
 
 ````markdown
 ```azer-table
@@ -100,8 +102,8 @@ An ambush
 
 | Roll (2d6) | Result |
 | --- | --- |
-| 2–7 | A quiet watch |
-| 8–12 | An ambush |
+| 2–6 | A quiet watch |
+| 7–12 | An ambush |
 
 ## AI features & your API key
 

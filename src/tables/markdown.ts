@@ -17,11 +17,10 @@ export function azerTableMarkdown(source: string): string {
   if (!result.ok) return warningCallout(result.error);
 
   const label = die.n === 1 ? `d${die.m}` : `${die.n}d${die.m}`;
-  // Single-die ranges are die faces (pass die.m so d100 pads); pool ranges are
-  // sum values that never need padding, so pass 0 to skip it.
-  const padDie = die.n === 1 ? die.m : 0;
+  // Pad only percentile d100 faces (01–09); pool sums never need it.
+  const pad = die.n === 1 && die.m === 100;
   const rows = entries.map(
-    (e, i) => `| ${formatRange(result.ranges[i], padDie)} | ${escapeCell(e.text)} |`,
+    (e, i) => `| ${formatRange(result.ranges[i], pad)} | ${escapeCell(e.text)} |`,
   );
   return [`| Roll (${label}) | Result |`, "| --- | --- |", ...rows].join("\n");
 }
