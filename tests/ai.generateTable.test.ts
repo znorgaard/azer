@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AIError } from "../src/ai/client";
 import { chooseDie, fencedAzerTable, generateTable, sanitizeTableBody } from "../src/ai/generateTable";
-import { apportion } from "../src/tables/apportion";
+import { apportion, apportionPool } from "../src/tables/apportion";
 import { parseTable } from "../src/tables/parse";
 
 const VALID = "die: d6\n3x Bandits\nA dragon\nNothing happens";
@@ -28,10 +28,9 @@ function expectValid(body: string): void {
   const parsed = parseTable(body);
   expect(parsed.ok, parsed.ok ? "" : parsed.error).toBe(true);
   if (parsed.ok) {
-    const fit = apportion(
-      parsed.table.die.m,
-      parsed.table.entries.map((e) => e.weight),
-    );
+    const { die } = parsed.table;
+    const weights = parsed.table.entries.map((e) => e.weight);
+    const fit = die.n === 1 ? apportion(die.m, weights) : apportionPool(die.n, die.m, weights);
     expect(fit.ok, fit.ok ? "" : fit.error).toBe(true);
   }
 }
@@ -70,6 +69,21 @@ describe("generateTable", () => {
     const { fn } = fakeComplete([TOO_SMALL]);
     const body = await generateTable(fn, "loot");
     expect(body).toBe("die: d6\nalpha\nbeta\ngamma\ndelta\nepsilon");
+    expectValid(body);
+  });
+
+  it("keeps a valid dice pool the model chose", async () => {
+    const { fn } = fakeComplete(["die: 2d6\nMisty morning\nA sudden storm\nClear skies"]);
+    const body = await generateTable(fn, "weather");
+    expect(body).toBe("die: 2d6\nMisty morning\nA sudden storm\nClear skies");
+    expectValid(body);
+  });
+
+  it("flattens a pool with fewer possible sums than entries to a fitting single die", async () => {
+    // 2d4 has only 7 sums (2..8) but 8 entries — flatten to the smallest die that fits (d8).
+    const { fn } = fakeComplete(["die: 2d4\na\nb\nc\nd\ne\nf\ng\nh"]);
+    const body = await generateTable(fn, "x");
+    expect(body).toBe("die: d8\na\nb\nc\nd\ne\nf\ng\nh");
     expectValid(body);
   });
 
