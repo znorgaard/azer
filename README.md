@@ -89,6 +89,11 @@ The two AI commands — **Generate Table (AI)** and **Recap Recent Sessions
 (AI)** — call the Anthropic API with your own key. You supply the key; usage is
 billed to your Anthropic account.
 
+When you run one of these commands, Azer sends text over the network to
+Anthropic's API: for **Generate Table**, the prompt you type; for **Recap Recent
+Sessions**, the contents of the Adventure Log notes being recapped. Nothing is
+sent unless you run one of these commands, and no other data is transmitted.
+
 ### Getting a key
 
 Create one in the [Anthropic Console](https://console.anthropic.com/settings/keys).
