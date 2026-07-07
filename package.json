@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc --noEmit && node esbuild.config.mjs production",
-    "lint": "eslint src",
+    "lint": "eslint src tests",
     "test": "vitest run",
     "test:watch": "vitest"
   },

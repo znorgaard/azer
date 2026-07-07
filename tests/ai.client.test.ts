@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { AIError, complete, type Fetcher } from "../src/ai/client";
 
 const params = { apiKey: "k", model: "claude-opus-4-8", system: "S", user: "U", maxTokens: 4096 };
-const fetcherReturning = (status: number, json: unknown): Fetcher => async () => ({ status, json });
+const fetcherReturning = (status: number, json: unknown): Fetcher => () => Promise.resolve({ status, json });
 
 describe("complete", () => {
   it("returns the model text on a 2xx response", async () => {
@@ -18,9 +18,7 @@ describe("complete", () => {
   });
 
   it("wraps a fetcher (network) error as AIError", async () => {
-    const fetch: Fetcher = async () => {
-      throw new Error("ENOTFOUND");
-    };
+    const fetch: Fetcher = () => Promise.reject(new Error("ENOTFOUND"));
     await expect(complete(fetch, params)).rejects.toThrow(AIError);
     await expect(complete(fetch, params)).rejects.toThrow(/Network error: ENOTFOUND/);
   });
@@ -37,9 +35,9 @@ describe("complete", () => {
 
   it("passes the built request to the fetcher", async () => {
     let seenUrl = "";
-    const fetch: Fetcher = async (req) => {
+    const fetch: Fetcher = (req) => {
       seenUrl = req.url;
-      return { status: 200, json: { content: [{ type: "text", text: "ok" }] } };
+      return Promise.resolve({ status: 200, json: { content: [{ type: "text", text: "ok" }] } });
     };
     await complete(fetch, params);
     expect(seenUrl).toBe("https://api.anthropic.com/v1/messages");

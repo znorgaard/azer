@@ -17,7 +17,7 @@ describe("buildRequest", () => {
   });
 
   it("sends model, system, user message, adaptive thinking, and max_tokens — never budget_tokens", () => {
-    const body = JSON.parse(buildRequest(base).body as string);
+    const body: unknown = JSON.parse(buildRequest(base).body as string);
     expect(body).toMatchObject({
       model: "claude-opus-4-8",
       max_tokens: 4096,
