@@ -1,21 +1,7 @@
 import { type App, PluginSettingTab, Setting } from "obsidian";
-import { ALL_TYPES, SCHEMAS } from "./schema/types";
 import { DEFAULT_SETTINGS, getApiKey, setApiKey } from "./settings";
-import { resolveCustomTypes } from "./schema/resolveCustomTypes";
+import { CONFIG_PATH } from "./schema/loadTypes";
 import type AzerPlugin from "./main";
-
-// Shown as placeholder in the empty custom-types box — mirrors the README example.
-const CUSTOM_TYPES_EXAMPLE = `- id: faction            # required, kebab-case, unique, not a built-in id
-  label: Faction         # optional; defaults to a Title-Cased id
-  folder: Factions       # optional; defaults to the id
-  fields:                # optional
-    - key: leader        # scalar field (default "")
-    - key: goals
-      list: true         # list field (default [])
-  body: |                # optional starter body
-    ## Overview
-
-    ## Members`;
 
 export class AzerSettingTab extends PluginSettingTab {
   constructor(
@@ -70,50 +56,13 @@ export class AzerSettingTab extends PluginSettingTab {
         }),
       );
 
-    new Setting(containerEl).setName("Default folders").setHeading();
-    for (const type of ALL_TYPES) {
-      new Setting(containerEl).setName(SCHEMAS[type].label).addText((text) =>
-        text.setValue(this.plugin.settings.folders[type]).onChange(async (value) => {
-          this.plugin.settings.folders[type] = value.trim() || SCHEMAS[type].defaultFolder;
-          await this.plugin.saveSettings();
-        }),
-      );
-    }
-
     new Setting(containerEl).setName("Advanced").setHeading();
 
-    const setting = new Setting(containerEl)
-      .setName("Custom note types (YAML)")
+    new Setting(containerEl)
+      .setName("Note types")
       .setDesc(
-        'Define extra note types as a YAML list. Each needs a kebab-case id; ' +
-          'a new type gets its "New X" command after you reload Obsidian — ' +
-          'renames and removals also take effect on reload.',
+        `Note types and their templates are defined in ${CONFIG_PATH} at your vault root. ` +
+          "Edit that file and reload Obsidian to apply changes.",
       );
-
-    const status = containerEl.createDiv({ cls: "setting-item-description" });
-    const renderStatus = (yaml: string): void => {
-      const { types, errors } = resolveCustomTypes(yaml);
-      status.empty();
-      const count = `${types.length} custom type${types.length === 1 ? "" : "s"} valid`;
-      status.createDiv({ text: types.length > 0 ? `${count} (reload to apply).` : `${count}.` });
-      for (const err of errors) status.createDiv({ text: err });
-    };
-
-    setting.addTextArea((text) => {
-      text.setPlaceholder(CUSTOM_TYPES_EXAMPLE);
-      text.setValue(this.plugin.settings.customTypesYaml).onChange(async (value) => {
-        this.plugin.settings.customTypesYaml = value;
-        renderStatus(value);
-        await this.plugin.saveSettings();
-      });
-      text.inputEl.rows = 12;
-    });
-    renderStatus(this.plugin.settings.customTypesYaml);
-
-    // Always-visible annotated example (the placeholder above vanishes once the
-    // box has any text), collapsible so it doesn't crowd the tab.
-    const example = containerEl.createEl("details", { cls: "setting-item-description" });
-    example.createEl("summary", { text: "Example" });
-    example.createEl("pre", { text: CUSTOM_TYPES_EXAMPLE });
   }
 }
