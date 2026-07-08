@@ -54,13 +54,13 @@ export function registerAiCommands(plugin: AzerPlugin): void {
     callback: () => {
       if (!requireKey()) return;
       const { refs, activePath } = campaignContext(plugin.app);
-      const state = campaignPicker(refs, activePath, typeFolderNames(plugin.settings));
+      const state = campaignPicker(refs, activePath, typeFolderNames(plugin.settings, plugin.customFolders()));
       promptForTable(plugin.app, state, async ({ name, prompt, campaign }) => {
         const notice = new Notice("Generating table…", 0);
         try {
           const body = fencedAzerTable(await generateTable(ask, prompt));
           const ports = makeObsidianPorts(plugin.app);
-          const folder = scopedFolder(campaign, folderFor(plugin.settings, "table"));
+          const folder = scopedFolder(campaign, folderFor(plugin.settings, getSchema("table")));
           await createTypedNote(ports, getSchema("table"), name, folder, body);
         } catch (err) {
           new Notice(err instanceof AIError ? err.message : String(err));
@@ -77,7 +77,7 @@ export function registerAiCommands(plugin: AzerPlugin): void {
     callback: () => {
       if (!requireKey()) return;
       const { refs, activePath } = campaignContext(plugin.app);
-      const exclude = typeFolderNames(plugin.settings);
+      const exclude = typeFolderNames(plugin.settings, plugin.customFolders());
       const state = campaignPicker(refs, activePath, exclude);
       promptForRecap(plugin.app, state, async ({ count, campaign }) => {
         const all = await gatherAdventureLog(plugin.app);
