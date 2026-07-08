@@ -68,4 +68,11 @@ describe("validateCustomTypes", () => {
     expect(r.types.map((t) => t.azerType)).toEqual(["faction"]);
     expect(r.errors).toHaveLength(1);
   });
+
+  it("errors but keeps the type when fields is not a list", () => {
+    const r = validateCustomTypes([{ id: "faction", fields: { key: "leader" } }]);
+    expect(r.types.map((t) => t.azerType)).toEqual(["faction"]);
+    expect(r.types[0].fields).toEqual([]);
+    expect(r.errors).toHaveLength(1);
+  });
 });
