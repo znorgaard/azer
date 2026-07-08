@@ -80,6 +80,12 @@ describe("validateCustomTypes", () => {
     expect(r.types[0]).toMatchObject({ label: "Faction", defaultFolder: "Factions", fields: [{ key: "leader", default: "" }] });
   });
 
+  it("trims a padded id (e.g. a quoted `id: \"faction \"`) instead of failing the kebab check", () => {
+    const r = validateCustomTypes([{ id: " faction " }]);
+    expect(r.errors).toEqual([]);
+    expect(r.types[0].azerType).toBe("faction");
+  });
+
   it("reports a non-string body/label/folder but still builds the type with fallbacks", () => {
     const r = validateCustomTypes([{ id: "faction", label: 1, folder: [], body: { a: 1 } }]);
     expect(r.types[0]).toMatchObject({ label: "Faction", defaultFolder: "faction", bodyTemplate: "" });

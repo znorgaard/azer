@@ -70,6 +70,7 @@ inline message under the editor, so one typo doesn't drop the rest.
 
 A new type's **"New X" command appears after you reload Obsidian** (or toggle
 the plugin off and on) — commands are registered when the plugin loads.
+Renaming or removing a type takes effect on the next reload too.
 
 ## Random tables
 

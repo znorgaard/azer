@@ -42,11 +42,14 @@ export function validateCustomTypes(parsed: unknown): CustomTypesResult {
       errors.push(`Entry ${i + 1}: must be a mapping with an id.`);
       return;
     }
-    const id = entry.id;
-    if (typeof id !== "string" || id.trim() === "") {
+    const rawId = entry.id;
+    if (typeof rawId !== "string" || rawId.trim() === "") {
       errors.push(`Entry ${i + 1}: id is required.`);
       return;
     }
+    // Trim like label/folder/key so a quoted `id: "faction "` doesn't fail the
+    // kebab check with a message that looks like it should have passed.
+    const id = rawId.trim();
     if (!KEBAB.test(id)) {
       errors.push(`${id}: id must be kebab-case (lowercase letters, digits, hyphens).`);
       return;

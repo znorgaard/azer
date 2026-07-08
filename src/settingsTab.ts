@@ -86,7 +86,8 @@ export class AzerSettingTab extends PluginSettingTab {
       .setName("Custom note types (YAML)")
       .setDesc(
         'Define extra note types as a YAML list. Each needs a kebab-case id; ' +
-          'a new type gets its "New X" command after you reload Obsidian.',
+          'a new type gets its "New X" command after you reload Obsidian — ' +
+          'renames and removals also take effect on reload.',
       );
 
     const status = containerEl.createDiv({ cls: "setting-item-description" });
