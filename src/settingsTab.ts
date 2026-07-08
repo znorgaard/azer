@@ -58,11 +58,15 @@ export class AzerSettingTab extends PluginSettingTab {
 
     new Setting(containerEl).setName("Advanced").setHeading();
 
-    new Setting(containerEl)
-      .setName("Note types")
-      .setDesc(
-        `Note types and their templates are defined in ${CONFIG_PATH} at your vault root. ` +
-          "Edit that file and reload Obsidian to apply changes.",
-      );
+    const notesDesc = new DocumentFragment();
+    notesDesc.appendText("Note types and their templates are defined in ");
+    const configLink = notesDesc.createEl("a", { text: CONFIG_PATH, href: "#" });
+    configLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      void this.plugin.openConfigFile();
+    });
+    notesDesc.appendText(" at your vault root. Edit that file and reload Obsidian to apply changes.");
+
+    new Setting(containerEl).setName("Note types").setDesc(notesDesc);
   }
 }

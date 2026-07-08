@@ -1,9 +1,9 @@
-import { Notice, Plugin } from "obsidian";
+import { Notice, Plugin, TFile, normalizePath } from "obsidian";
 import { createTypedNote } from "./commands/newNote";
 import { makeObsidianPorts } from "./obsidianPorts";
 import { promptForNewNote } from "./nameModal";
 import type { TypeSchema } from "./schema/types";
-import { loadNoteTypes } from "./schema/loadTypes";
+import { CONFIG_PATH, loadNoteTypes } from "./schema/loadTypes";
 import { TABLE_SCHEMA } from "./schema/defaultTypes";
 import { AzerSettingTab } from "./settingsTab";
 import { type AzerSettings, mergeSettings, typeFolderNames } from "./settings";
@@ -41,7 +41,15 @@ export default class AzerPlugin extends Plugin {
     this.schemas = schemas;
     if (errors.length > 0) {
       console.warn(`Azer: ${errors.length} issue(s) in azer.yaml:`, errors);
-      new Notice(`Azer: ${errors.length} issue(s) in azer.yaml — open it to fix (details in the developer console).`);
+      const frag = new DocumentFragment();
+      frag.appendText(`Azer: ${errors.length} issue(s) in `);
+      const link = frag.createEl("a", { text: CONFIG_PATH, href: "#" });
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        void this.openConfigFile();
+      });
+      frag.appendText(" — open it to fix (details in the developer console).");
+      new Notice(frag, 15000);
     }
 
     // ponytail: type commands are registered here, so a newly added type gets
@@ -53,6 +61,20 @@ export default class AzerPlugin extends Plugin {
         name: `New ${schema.label}`,
         callback: () => void this.newNote(schema),
       });
+    }
+  }
+
+  /**
+   * Open `azer.yaml` in a new tab. Obsidian's editor is Markdown-only, so a
+   * YAML-editor community plugin renders it in-app; otherwise Obsidian hands it
+   * to the default app. Called from the settings link and the error notice.
+   */
+  async openConfigFile(): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(normalizePath(CONFIG_PATH));
+    if (file instanceof TFile) {
+      await this.app.workspace.getLeaf("tab").openFile(file);
+    } else {
+      new Notice(`${CONFIG_PATH} not found in this vault.`);
     }
   }
 
