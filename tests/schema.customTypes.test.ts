@@ -46,15 +46,15 @@ describe("validateCustomTypes", () => {
     });
   });
 
-  it("rejects non-kebab ids, built-in clashes, and duplicates, keeping valid ones", () => {
+  it("rejects non-kebab ids and duplicates, keeping valid ones (former built-in ids are now allowed)", () => {
     const r = validateCustomTypes([
-      { id: "Faction" },        // not kebab-case
-      { id: "npc" },            // built-in clash
-      { id: "deity" },          // ok
-      { id: "deity" },          // duplicate
+      { id: "Faction" }, // not kebab-case
+      { id: "npc" },      // formerly a built-in clash — now a valid id
+      { id: "deity" },    // ok
+      { id: "deity" },    // duplicate
     ]);
-    expect(r.types.map((t) => t.azerType)).toEqual(["deity"]);
-    expect(r.errors).toHaveLength(3);
+    expect(r.types.map((t) => t.azerType)).toEqual(["npc", "deity"]);
+    expect(r.errors).toHaveLength(2);
   });
 
   it("skips a field with a missing key but keeps the type", () => {

@@ -1,8 +1,7 @@
-import { ALL_TYPES, type FieldSpec, type TypeSchema } from "./types";
+import { type FieldSpec, type TypeSchema } from "./types";
 import { AZER_TYPE_KEY } from "./frontmatter";
 
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const BUILT_IN: ReadonlySet<string> = new Set(ALL_TYPES);
 
 export interface CustomTypesResult {
   types: TypeSchema[];
@@ -52,10 +51,6 @@ export function validateCustomTypes(parsed: unknown): CustomTypesResult {
     const id = rawId.trim();
     if (!KEBAB.test(id)) {
       errors.push(`${id}: id must be kebab-case (lowercase letters, digits, hyphens).`);
-      return;
-    }
-    if (BUILT_IN.has(id)) {
-      errors.push(`${id}: id clashes with a built-in type.`);
       return;
     }
     if (seen.has(id)) {
