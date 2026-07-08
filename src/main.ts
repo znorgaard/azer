@@ -21,13 +21,28 @@ export default class AzerPlugin extends Plugin {
 
   async onload(): Promise<void> {
     await this.loadSettings();
+    this.ports = makeObsidianPorts(this.app);
+
+    registerAzerTable(this);
+    registerAiCommands(this);
+    this.addSettingTab(new AzerSettingTab(this.app, this));
+
+    // Resolving note types reads azer.yaml, but the vault file index isn't
+    // reliably populated during onload — getAbstractFileByPath can return null
+    // for an existing file, sending loadNoteTypes down the seed path where
+    // create() throws "already exists" and every "New X" command is lost. Defer
+    // to onLayoutReady, when the index is ready (fires immediately if already).
+    this.app.workspace.onLayoutReady(() => void this.registerNoteTypes());
+  }
+
+  /** Resolve note types from azer.yaml and register a "New X" command per type. */
+  private async registerNoteTypes(): Promise<void> {
     const { schemas, errors } = await loadNoteTypes(this.app);
     this.schemas = schemas;
     if (errors.length > 0) {
       console.warn(`Azer: ${errors.length} issue(s) in azer.yaml:`, errors);
       new Notice(`Azer: ${errors.length} issue(s) in azer.yaml — open it to fix (details in the developer console).`);
     }
-    this.ports = makeObsidianPorts(this.app);
 
     // ponytail: type commands are registered here, so a newly added type gets
     // its "New X" command only after the next reload. Live re-registration
@@ -39,11 +54,6 @@ export default class AzerPlugin extends Plugin {
         callback: () => void this.newNote(schema),
       });
     }
-
-    registerAzerTable(this);
-    registerAiCommands(this);
-
-    this.addSettingTab(new AzerSettingTab(this.app, this));
   }
 
   /** The `table` schema from azer.yaml, or the hardcoded fallback if deleted. */
