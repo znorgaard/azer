@@ -1,7 +1,7 @@
 import { type App, PluginSettingTab, Setting } from "obsidian";
 import { ALL_TYPES, SCHEMAS } from "./schema/types";
 import { DEFAULT_SETTINGS, getApiKey, setApiKey } from "./settings";
-import type AzerPlugin from "./main";
+import AzerPlugin from "./main";
 
 export class AzerSettingTab extends PluginSettingTab {
   constructor(
@@ -65,5 +65,32 @@ export class AzerSettingTab extends PluginSettingTab {
         }),
       );
     }
+
+    new Setting(containerEl).setName("Advanced").setHeading();
+
+    const setting = new Setting(containerEl)
+      .setName("Custom note types (YAML)")
+      .setDesc(
+        'Define extra note types as a YAML list. Each needs a kebab-case id; ' +
+          'a new type gets its "New X" command after you reload Obsidian.',
+      );
+
+    const status = containerEl.createDiv({ cls: "setting-item-description" });
+    const renderStatus = (yaml: string): void => {
+      const { types, errors } = AzerPlugin.resolveCustomTypes(yaml);
+      status.empty();
+      status.createDiv({ text: `${types.length} custom type${types.length === 1 ? "" : "s"} loaded.` });
+      for (const err of errors) status.createDiv({ text: err });
+    };
+
+    setting.addTextArea((text) => {
+      text.setValue(this.plugin.settings.customTypesYaml).onChange(async (value) => {
+        this.plugin.settings.customTypesYaml = value;
+        renderStatus(value);
+        await this.plugin.saveSettings();
+      });
+      text.inputEl.rows = 12;
+    });
+    renderStatus(this.plugin.settings.customTypesYaml);
   }
 }
