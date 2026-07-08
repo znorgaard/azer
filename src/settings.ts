@@ -1,4 +1,4 @@
-import { ALL_TYPES, SCHEMAS, type AzerType } from "./schema/types";
+import { ALL_TYPES, SCHEMAS, type AzerType, type TypeSchema } from "./schema/types";
 
 export interface AzerSettings {
   /** Anthropic model for the AI features. */
@@ -7,8 +7,10 @@ export interface AzerSettings {
   maxTokens: number;
   /** Folder for AI-generated recap notes. */
   recapsFolder: string;
-  /** Default folder per note type. */
-  folders: Record<AzerType, string>;
+  /** Default folder per built-in note type (keyed by azer-type id). */
+  folders: Record<string, string>;
+  /** User-defined note types, authored as a raw YAML list; parsed on load. */
+  customTypesYaml: string;
 }
 
 function defaultFolders(): Record<AzerType, string> {
@@ -24,6 +26,7 @@ export const DEFAULT_SETTINGS: AzerSettings = {
   maxTokens: 4096,
   recapsFolder: "Recaps",
   folders: defaultFolders(),
+  customTypesYaml: "",
 };
 
 /**
@@ -53,20 +56,22 @@ export function mergeSettings(loaded: unknown): AzerSettings {
  * case-insensitive filesystems. Consumers must compare against a lower-cased key
  * (see `effectiveCampaign`).
  */
-export function typeFolderNames(settings: AzerSettings): ReadonlySet<string> {
+export function typeFolderNames(
+  settings: AzerSettings,
+  customFolders: readonly string[] = [],
+): ReadonlySet<string> {
   const names = new Set<string>();
-  for (const folder of [...Object.values(settings.folders), settings.recapsFolder]) {
+  for (const folder of [...Object.values(settings.folders), settings.recapsFolder, ...customFolders]) {
     const first = folder.split("/")[0].trim().toLowerCase();
     if (first) names.add(first);
   }
   return names;
 }
 
-export function folderFor(settings: AzerSettings, type: AzerType): string {
-  // The `??` is a forward-compat safety net: a `data.json` saved before a new
-  // note type existed will lack that folder key at runtime (loadData merges
-  // shallowly over DEFAULT_SETTINGS), so fall back to the schema default.
-  return settings.folders[type] ?? SCHEMAS[type].defaultFolder;
+export function folderFor(settings: AzerSettings, schema: TypeSchema): string {
+  // A built-in type may have a saved folder override; a custom type has none,
+  // so it falls back to the folder declared in its YAML (schema.defaultFolder).
+  return settings.folders[schema.azerType] ?? schema.defaultFolder;
 }
 
 /**

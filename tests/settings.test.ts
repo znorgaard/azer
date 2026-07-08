@@ -9,6 +9,7 @@ import {
   typeFolderNames,
   type LocalStorageApp,
 } from "../src/settings";
+import { getSchema } from "../src/schema/types";
 
 class FakeLocalStorageApp implements LocalStorageApp {
   store = new Map<string, string>();
@@ -28,10 +29,21 @@ describe("settings", () => {
     expect(DEFAULT_SETTINGS.folders["adventure-log"]).toBe("Adventure Log");
   });
 
-  it("resolves a folder, honoring overrides", () => {
-    expect(folderFor(DEFAULT_SETTINGS, "pc")).toBe("PCs");
+  it("resolves a folder from a schema, honoring overrides", () => {
+    expect(folderFor(DEFAULT_SETTINGS, getSchema("pc"))).toBe("PCs");
     const custom = { ...DEFAULT_SETTINGS, folders: { ...DEFAULT_SETTINGS.folders, pc: "Party" } };
-    expect(folderFor(custom, "pc")).toBe("Party");
+    expect(folderFor(custom, getSchema("pc"))).toBe("Party");
+  });
+
+  it("resolves a custom schema's folder from its defaultFolder", () => {
+    const schema = { azerType: "faction", label: "Faction", defaultFolder: "Factions", fields: [], bodyTemplate: "" };
+    expect(folderFor(DEFAULT_SETTINGS, schema)).toBe("Factions");
+  });
+
+  it("includes custom folders in the non-campaign name set", () => {
+    const names = typeFolderNames(DEFAULT_SETTINGS, ["Factions", "Deities"]);
+    expect(names.has("factions")).toBe(true);
+    expect(names.has("deities")).toBe(true);
   });
 
   it("collects every type folder plus the recaps folder as lower-cased non-campaign names", () => {
@@ -89,6 +101,11 @@ describe("mergeSettings", () => {
     expect(s.model).toBe("claude-custom");
     expect(s.folders.pc).toBe("Party"); // saved override
     expect(s.folders.npc).toBe("NPCs"); // default retained for unsaved type
+  });
+
+  it("defaults customTypesYaml to empty and round-trips a saved value", () => {
+    expect(mergeSettings(null).customTypesYaml).toBe("");
+    expect(mergeSettings({ customTypesYaml: "- id: faction\n" }).customTypesYaml).toBe("- id: faction\n");
   });
 });
 
