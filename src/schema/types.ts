@@ -10,7 +10,7 @@ export interface FieldSpec {
 }
 
 export interface TypeSchema {
-  readonly azerType: AzerType;
+  readonly azerType: string;
   /** Human label for commands, e.g. "NPC". */
   readonly label: string;
   /** Default folder the "New X" command files notes into. */
