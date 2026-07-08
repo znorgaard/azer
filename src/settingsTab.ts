@@ -106,5 +106,11 @@ export class AzerSettingTab extends PluginSettingTab {
       text.inputEl.rows = 12;
     });
     renderStatus(this.plugin.settings.customTypesYaml);
+
+    // Always-visible annotated example (the placeholder above vanishes once the
+    // box has any text), collapsible so it doesn't crowd the tab.
+    const example = containerEl.createEl("details", { cls: "setting-item-description" });
+    example.createEl("summary", { text: "Example" });
+    example.createEl("pre", { text: CUSTOM_TYPES_EXAMPLE });
   }
 }
