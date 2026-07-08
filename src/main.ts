@@ -2,10 +2,11 @@ import { Notice, Plugin } from "obsidian";
 import { createTypedNote } from "./commands/newNote";
 import { makeObsidianPorts } from "./obsidianPorts";
 import { promptForNewNote } from "./nameModal";
-import { ALL_TYPES, getSchema, type TypeSchema } from "./schema/types";
-import { resolveCustomTypes } from "./schema/resolveCustomTypes";
+import type { TypeSchema } from "./schema/types";
+import { loadNoteTypes } from "./schema/loadTypes";
+import { TABLE_SCHEMA } from "./schema/defaultTypes";
 import { AzerSettingTab } from "./settingsTab";
-import { type AzerSettings, folderFor, mergeSettings, typeFolderNames } from "./settings";
+import { type AzerSettings, mergeSettings, typeFolderNames } from "./settings";
 import type { NotePorts } from "./ports";
 import { registerAzerTable } from "./tables/codeBlock";
 import { registerAiCommands } from "./commands/aiCommands";
@@ -14,24 +15,24 @@ import { campaignPicker, scopedFolder } from "./campaign";
 
 export default class AzerPlugin extends Plugin {
   settings: AzerSettings = mergeSettings(null);
-  /** Resolved user-defined types; rebuilt from settings on load. */
-  private customSchemas: TypeSchema[] = [];
+  /** All note types, resolved from azer.yaml on load. */
+  private schemas: TypeSchema[] = [];
   private ports!: NotePorts;
 
   async onload(): Promise<void> {
     await this.loadSettings();
-    const { types, errors } = resolveCustomTypes(this.settings.customTypesYaml);
-    this.customSchemas = types;
+    const { schemas, errors } = await loadNoteTypes(this.app);
+    this.schemas = schemas;
     if (errors.length > 0) {
-      console.warn(`Azer: ${errors.length} custom note-type issue(s) — see Settings → Azer → Advanced:`, errors);
+      console.warn(`Azer: ${errors.length} issue(s) in azer.yaml:`, errors);
+      new Notice(`Azer: ${errors.length} issue(s) in azer.yaml — see the developer console.`);
     }
     this.ports = makeObsidianPorts(this.app);
 
-    // ponytail: custom-type commands are registered here, so a newly added type
-    // gets its "New X" command only after the next reload. Live re-registration
+    // ponytail: type commands are registered here, so a newly added type gets
+    // its "New X" command only after the next reload. Live re-registration
     // would need Obsidian's private app.commands API — not worth the review risk.
-    const schemas: TypeSchema[] = [...ALL_TYPES.map(getSchema), ...this.customSchemas];
-    for (const schema of schemas) {
+    for (const schema of this.schemas) {
       this.addCommand({
         id: `new-${schema.azerType}`,
         name: `New ${schema.label}`,
@@ -45,18 +46,23 @@ export default class AzerPlugin extends Plugin {
     this.addSettingTab(new AzerSettingTab(this.app, this));
   }
 
-  /** Folders owned by custom types — excluded from the campaign picker. */
-  customFolders(): string[] {
-    return this.customSchemas.map((s) => s.defaultFolder);
+  /** The `table` schema from azer.yaml, or the hardcoded fallback if deleted. */
+  tableSchema(): TypeSchema {
+    return this.schemas.find((s) => s.azerType === "table") ?? TABLE_SCHEMA;
+  }
+
+  /** Lower-cased folder names Azer owns — excluded from the campaign picker. */
+  folderExclusions(): ReadonlySet<string> {
+    return typeFolderNames([...this.schemas.map((s) => s.defaultFolder), this.settings.recapsFolder]);
   }
 
   private async newNote(schema: TypeSchema): Promise<void> {
     const { refs, activePath } = campaignContext(this.app);
-    const state = campaignPicker(refs, activePath, typeFolderNames(this.settings, this.customFolders()));
+    const state = campaignPicker(refs, activePath, this.folderExclusions());
     try {
       const result = await promptForNewNote(this.app, schema.label, state);
       if (!result) return;
-      const folder = scopedFolder(result.campaign, folderFor(this.settings, schema));
+      const folder = scopedFolder(result.campaign, schema.defaultFolder);
       await createTypedNote(this.ports, schema, result.name, folder);
     } catch (err) {
       new Notice(err instanceof Error ? err.message : String(err));
