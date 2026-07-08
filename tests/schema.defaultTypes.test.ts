@@ -6,6 +6,9 @@ import { DEFAULT_TYPES_YAML, TABLE_SCHEMA } from "../src/schema/defaultTypes";
 // The seed is parsed by Obsidian's `parseYaml` in production; here we parse it
 // with the `yaml` package (same YAML 1.2 semantics for this simple document)
 // purely to guard that the shipped seed validates to the six built-ins cleanly.
+// Caveat: production `parseYaml` (Obsidian's js-yaml) and the `yaml` package can
+// differ on YAML 1.1-isms (e.g. `yes`/`on` as booleans); for this seed they agree.
+// This guard catches a validation error in the seed, not a parser divergence.
 describe("DEFAULT_TYPES_YAML", () => {
   const { types, errors } = validateCustomTypes(parse(DEFAULT_TYPES_YAML));
 

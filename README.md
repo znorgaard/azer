@@ -18,7 +18,7 @@ table generation + recaps — over plain Markdown in your own vault.
 - **AI features** (using an Anthropic API key stored **only on this device**):
   generate a table from a prompt, and recap the last N Adventure Log notes into
   a grounded summary.
-- **Settings:** default folders, model, and the device-local API key (never
+- **Settings:** recaps folder, model, and the device-local API key (never
   synced).
 
 Running a session at the table uses Obsidian's own split panes and reading view

@@ -25,7 +25,7 @@ export default class AzerPlugin extends Plugin {
     this.schemas = schemas;
     if (errors.length > 0) {
       console.warn(`Azer: ${errors.length} issue(s) in azer.yaml:`, errors);
-      new Notice(`Azer: ${errors.length} issue(s) in azer.yaml — see the developer console.`);
+      new Notice(`Azer: ${errors.length} issue(s) in azer.yaml — open it to fix (details in the developer console).`);
     }
     this.ports = makeObsidianPorts(this.app);
 
@@ -53,7 +53,14 @@ export default class AzerPlugin extends Plugin {
 
   /** Lower-cased folder names Azer owns — excluded from the campaign picker. */
   folderExclusions(): ReadonlySet<string> {
-    return typeFolderNames([...this.schemas.map((s) => s.defaultFolder), this.settings.recapsFolder]);
+    // Include the table fallback folder so a vault that deleted the `table` type
+    // (Generate Table still writes there via TABLE_SCHEMA) doesn't surface
+    // Tables/ as a campaign. tableSchema() de-dupes when the entry is present.
+    return typeFolderNames([
+      ...this.schemas.map((s) => s.defaultFolder),
+      this.tableSchema().defaultFolder,
+      this.settings.recapsFolder,
+    ]);
   }
 
   private async newNote(schema: TypeSchema): Promise<void> {
