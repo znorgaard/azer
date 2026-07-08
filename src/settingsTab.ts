@@ -3,6 +3,19 @@ import { ALL_TYPES, SCHEMAS } from "./schema/types";
 import { DEFAULT_SETTINGS, getApiKey, setApiKey } from "./settings";
 import AzerPlugin from "./main";
 
+// Shown as placeholder in the empty custom-types box — mirrors the README example.
+const CUSTOM_TYPES_EXAMPLE = `- id: faction            # required, kebab-case, unique, not a built-in id
+  label: Faction         # optional; defaults to a Title-Cased id
+  folder: Factions       # optional; defaults to the id
+  fields:                # optional
+    - key: leader        # scalar field (default "")
+    - key: goals
+      list: true         # list field (default [])
+  body: |                # optional starter body
+    ## Overview
+
+    ## Members`;
+
 export class AzerSettingTab extends PluginSettingTab {
   constructor(
     app: App,
@@ -84,6 +97,7 @@ export class AzerSettingTab extends PluginSettingTab {
     };
 
     setting.addTextArea((text) => {
+      text.setPlaceholder(CUSTOM_TYPES_EXAMPLE);
       text.setValue(this.plugin.settings.customTypesYaml).onChange(async (value) => {
         this.plugin.settings.customTypesYaml = value;
         renderStatus(value);
