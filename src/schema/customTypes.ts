@@ -82,6 +82,7 @@ export function validateCustomTypes(parsed: unknown): CustomTypesResult {
       if (!Array.isArray(rawFields)) {
         errors.push(`${id}: fields must be a list.`);
       } else {
+        const seenKeys = new Set<string>();
         rawFields.forEach((f, j) => {
           if (!isMapping(f) || typeof f.key !== "string" || f.key.trim() === "") {
             errors.push(`${id}: field ${j + 1} needs a key.`);
@@ -92,6 +93,11 @@ export function validateCustomTypes(parsed: unknown): CustomTypesResult {
             errors.push(`${id}: field key "${AZER_TYPE_KEY}" is reserved.`);
             return;
           }
+          if (seenKeys.has(key)) {
+            errors.push(`${id}: duplicate field key "${key}".`);
+            return;
+          }
+          seenKeys.add(key);
           fields.push({ key, default: f.list === true ? [] : "" });
         });
       }

@@ -40,7 +40,9 @@ out of the Obsidian runtime so it can be unit-tested with fakes:
   Obsidian implementation is injected at runtime, and `tests/fakes.ts` supplies
   test doubles.
 - **`src/schema/`** — note types and YAML-frontmatter parse/render
-  (`types.ts`, `frontmatter.ts`).
+  (`types.ts`, `frontmatter.ts`), plus user-defined custom types
+  (`customTypes.ts` validates the parsed YAML; `resolveCustomTypes.ts` wraps
+  `parseYaml`).
 - **`src/notes/`, `src/commands/`** — note creation and the plugin commands
   (e.g. campaign-scoped "New NPC/Session/…" and the AI commands).
 - **`src/campaign.ts` / `src/campaignScan.ts`** — pure campaign-folder logic
@@ -60,7 +62,15 @@ out of the Obsidian runtime so it can be unit-tested with fakes:
 - Every module declares its exports explicitly.
 - Obsidian access goes through ports; pure logic never imports `obsidian`
   directly, so it stays testable.
-- `tests/` mirrors `src/`; follow TDD — write the failing test first.
+- **Pure logic is unit-tested; the Obsidian-adapter seam is not.** A module that
+  *value*-imports `obsidian` (e.g. `parseYaml`, `Notice`, `requestUrl`) can't be
+  imported under Vitest — there is no `obsidian` mock — so it stays a thin
+  wrapper and the real logic lives in a pure sibling that is tested (e.g.
+  `resolveCustomTypes.ts` wraps `parseYaml`, delegating to the tested
+  `customTypes.ts`). A *type-only* `import type { … } from "obsidian"` erases at
+  compile time and keeps a module testable.
+- `tests/` mirrors `src/` for pure modules; follow TDD — write the failing test
+  first.
 - The API key lives on-device only and is never synced.
 
 ## Obsidian submission guidelines

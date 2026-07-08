@@ -15,12 +15,16 @@ import { campaignPicker, scopedFolder } from "./campaign";
 export default class AzerPlugin extends Plugin {
   settings: AzerSettings = mergeSettings(null);
   /** Resolved user-defined types; rebuilt from settings on load. */
-  customSchemas: TypeSchema[] = [];
+  private customSchemas: TypeSchema[] = [];
   private ports!: NotePorts;
 
   async onload(): Promise<void> {
     await this.loadSettings();
-    this.customSchemas = resolveCustomTypes(this.settings.customTypesYaml).types;
+    const { types, errors } = resolveCustomTypes(this.settings.customTypesYaml);
+    this.customSchemas = types;
+    if (errors.length > 0) {
+      console.warn(`Azer: ${errors.length} custom note-type issue(s) — see Settings → Azer → Advanced:`, errors);
+    }
     this.ports = makeObsidianPorts(this.app);
 
     // ponytail: custom-type commands are registered here, so a newly added type

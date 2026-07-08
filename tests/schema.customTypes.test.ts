@@ -90,6 +90,12 @@ describe("validateCustomTypes", () => {
     ]);
   });
 
+  it("rejects a duplicate field key, keeping the first occurrence", () => {
+    const r = validateCustomTypes([{ id: "faction", fields: [{ key: "leader" }, { key: "leader", list: true }] }]);
+    expect(r.types[0].fields).toEqual([{ key: "leader", default: "" }]);
+    expect(r.errors).toEqual(['faction: duplicate field key "leader".']);
+  });
+
   it("errors but keeps the type when fields is not a list", () => {
     const r = validateCustomTypes([{ id: "faction", fields: { key: "leader" } }]);
     expect(r.types.map((t) => t.azerType)).toEqual(["faction"]);
