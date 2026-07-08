@@ -60,8 +60,9 @@ export function registerAiCommands(plugin: AzerPlugin): void {
         try {
           const body = fencedAzerTable(await generateTable(ask, prompt));
           const ports = makeObsidianPorts(plugin.app);
-          const folder = scopedFolder(campaign, folderFor(plugin.settings, getSchema("table")));
-          await createTypedNote(ports, getSchema("table"), name, folder, body);
+          const schema = getSchema("table");
+          const folder = scopedFolder(campaign, folderFor(plugin.settings, schema));
+          await createTypedNote(ports, schema, name, folder, body);
         } catch (err) {
           new Notice(err instanceof AIError ? err.message : String(err));
         } finally {

@@ -6,7 +6,7 @@ table generation + recaps — over plain Markdown in your own vault.
 ## What it does
 
 - **Typed notes.** Commands to create **NPC, Session, Adventure Log, Location,
-  and PC** notes, each with a starter body and frontmatter (`azer-type` +
+  PC, and Table** notes, each with a starter body and frontmatter (`azer-type` +
   fields). Cross-reference them with normal `[[wikilinks]]` — backlinks and
   graph come from Obsidian. Beyond the built-ins, you can **define your own note
   types** in settings (see *Custom note types*).

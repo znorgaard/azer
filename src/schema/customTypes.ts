@@ -61,6 +61,17 @@ export function validateCustomTypes(parsed: unknown): CustomTypesResult {
     }
     seen.add(id);
 
+    // A present-but-wrong-type label/folder/body is a mistake worth surfacing —
+    // otherwise it silently falls back and the user wonders where their body went.
+    if (entry.label !== undefined && typeof entry.label !== "string") {
+      errors.push(`${id}: label must be a string.`);
+    }
+    if (entry.folder !== undefined && typeof entry.folder !== "string") {
+      errors.push(`${id}: folder must be a string.`);
+    }
+    if (entry.body !== undefined && typeof entry.body !== "string") {
+      errors.push(`${id}: body must be a string.`);
+    }
     const label = typeof entry.label === "string" && entry.label.trim() !== "" ? entry.label.trim() : labelFromId(id);
     const defaultFolder = typeof entry.folder === "string" && entry.folder.trim() !== "" ? entry.folder.trim() : id;
     const bodyTemplate = typeof entry.body === "string" ? entry.body : "";

@@ -93,9 +93,8 @@ export class AzerSettingTab extends PluginSettingTab {
     const renderStatus = (yaml: string): void => {
       const { types, errors } = resolveCustomTypes(yaml);
       status.empty();
-      status.createDiv({
-        text: `${types.length} custom type${types.length === 1 ? "" : "s"} valid (reload to apply).`,
-      });
+      const count = `${types.length} custom type${types.length === 1 ? "" : "s"} valid`;
+      status.createDiv({ text: types.length > 0 ? `${count} (reload to apply).` : `${count}.` });
       for (const err of errors) status.createDiv({ text: err });
     };
 

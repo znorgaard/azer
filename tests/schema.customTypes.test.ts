@@ -80,6 +80,16 @@ describe("validateCustomTypes", () => {
     expect(r.types[0]).toMatchObject({ label: "Faction", defaultFolder: "Factions", fields: [{ key: "leader", default: "" }] });
   });
 
+  it("reports a non-string body/label/folder but still builds the type with fallbacks", () => {
+    const r = validateCustomTypes([{ id: "faction", label: 1, folder: [], body: { a: 1 } }]);
+    expect(r.types[0]).toMatchObject({ label: "Faction", defaultFolder: "faction", bodyTemplate: "" });
+    expect(r.errors).toEqual([
+      "faction: label must be a string.",
+      "faction: folder must be a string.",
+      "faction: body must be a string.",
+    ]);
+  });
+
   it("errors but keeps the type when fields is not a list", () => {
     const r = validateCustomTypes([{ id: "faction", fields: { key: "leader" } }]);
     expect(r.types.map((t) => t.azerType)).toEqual(["faction"]);
