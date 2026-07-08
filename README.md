@@ -8,8 +8,8 @@ table generation + recaps — over plain Markdown in your own vault.
 - **Typed notes.** Commands to create **NPC, Session, Adventure Log, Location,
   PC, and Table** notes, each with a starter body and frontmatter (`azer-type` +
   fields). Cross-reference them with normal `[[wikilinks]]` — backlinks and
-  graph come from Obsidian. Beyond the built-ins, you can **define your own note
-  types** in settings (see *Custom note types*).
+  graph come from Obsidian. All note types live in `azer.yaml` at your vault
+  root, so you can add your own (see *Note types*).
 - **Multiple campaigns per vault** via a top-level Campaign folder; commands are
   campaign-scoped.
 - **Random tables** as a physical-die lookup: author a table in an `azer-table`
@@ -43,15 +43,16 @@ Files land in the type's default folder (under the campaign folder when scoped).
 The fields are just a starting point — add your own frontmatter freely; `[[wikilinks]]`
 in fields like `location` or `parent` are cross-references Obsidian tracks as backlinks.
 
-### Custom note types
+### Note types
 
-The six built-in types don't cover everything — deities, factions, items,
-free-form lore. Define your own in **Settings → Azer → Advanced → Custom note
-types**, as a YAML list. Each type has the same shape as a built-in: an id, a
-label, a default folder, frontmatter fields, and a starter body.
+Every note type — the built-ins and any you add — is defined in a single
+**`azer.yaml`** file at the root of your vault. It's created for you the first
+time the plugin loads, pre-filled with the built-in types (NPC, Session,
+Adventure Log, Location, PC, Table). Edit it in any text editor to add, change,
+or remove types:
 
 ```yaml
-- id: faction            # required, kebab-case, unique, not a built-in id
+- id: faction            # required, kebab-case, unique
   label: Faction         # optional; defaults to a Title-Cased id
   folder: Factions       # optional; defaults to the id
   fields:                # optional
@@ -64,13 +65,18 @@ label, a default folder, frontmatter fields, and a starter body.
     ## Members
 ```
 
-A type with a `list: true` field starts that frontmatter key as an empty list;
-otherwise fields start as empty strings. Invalid entries are skipped with an
-inline message under the editor, so one typo doesn't drop the rest.
+A field marked with the literal `list: true` starts that frontmatter key as an
+empty list; anything else (including `list: yes`) is a scalar and starts as an
+empty string. Invalid entries are skipped and reported in the developer console,
+so one typo doesn't drop the rest.
 
-A new type's **"New X" command appears after you reload Obsidian** (or toggle
-the plugin off and on) — commands are registered when the plugin loads.
-Renaming or removing a type takes effect on the next reload too.
+Changes take effect after you **reload Obsidian** (or toggle the plugin off and
+on) — a type's "New X" command is registered when the plugin loads. Deleting the
+whole `azer.yaml` re-seeds the built-in defaults on the next reload; an empty
+list (`[]`) means "no note types".
+
+> **Note:** `azer.yaml` isn't a Markdown note, so Obsidian opens it in your
+> system's default editor rather than in-app.
 
 ## Random tables
 
