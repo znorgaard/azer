@@ -8,7 +8,8 @@ table generation + recaps — over plain Markdown in your own vault.
 - **Typed notes.** Commands to create **NPC, Session, Adventure Log, Location,
   and PC** notes, each with a starter body and frontmatter (`azer-type` +
   fields). Cross-reference them with normal `[[wikilinks]]` — backlinks and
-  graph come from Obsidian.
+  graph come from Obsidian. Beyond the built-ins, you can **define your own note
+  types** in settings (see *Custom note types*).
 - **Multiple campaigns per vault** via a top-level Campaign folder; commands are
   campaign-scoped.
 - **Random tables** as a physical-die lookup: author a table in an `azer-table`
@@ -41,6 +42,34 @@ Files land in the type's default folder (under the campaign folder when scoped).
 
 The fields are just a starting point — add your own frontmatter freely; `[[wikilinks]]`
 in fields like `location` or `parent` are cross-references Obsidian tracks as backlinks.
+
+### Custom note types
+
+The six built-in types don't cover everything — deities, factions, items,
+free-form lore. Define your own in **Settings → Azer → Advanced → Custom note
+types**, as a YAML list. Each type has the same shape as a built-in: an id, a
+label, a default folder, frontmatter fields, and a starter body.
+
+```yaml
+- id: faction            # required, kebab-case, unique, not a built-in id
+  label: Faction         # optional; defaults to a Title-Cased id
+  folder: Factions       # optional; defaults to the id
+  fields:                # optional
+    - key: leader        # scalar field (default "")
+    - key: goals
+      list: true         # list field (default [])
+  body: |                # optional starter body
+    ## Overview
+
+    ## Members
+```
+
+A type with a `list: true` field starts that frontmatter key as an empty list;
+otherwise fields start as empty strings. Invalid entries are skipped with an
+inline message under the editor, so one typo doesn't drop the rest.
+
+A new type's **"New X" command appears after you reload Obsidian** (or toggle
+the plugin off and on) — commands are registered when the plugin loads.
 
 ## Random tables
 
