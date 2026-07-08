@@ -1,9 +1,9 @@
-import { Notice, Plugin, parseYaml } from "obsidian";
+import { Notice, Plugin } from "obsidian";
 import { createTypedNote } from "./commands/newNote";
 import { makeObsidianPorts } from "./obsidianPorts";
 import { promptForNewNote } from "./nameModal";
 import { ALL_TYPES, getSchema, type TypeSchema } from "./schema/types";
-import { type CustomTypesResult, validateCustomTypes } from "./schema/customTypes";
+import { resolveCustomTypes } from "./schema/resolveCustomTypes";
 import { AzerSettingTab } from "./settingsTab";
 import { type AzerSettings, folderFor, mergeSettings, typeFolderNames } from "./settings";
 import type { NotePorts } from "./ports";
@@ -20,7 +20,7 @@ export default class AzerPlugin extends Plugin {
 
   async onload(): Promise<void> {
     await this.loadSettings();
-    this.customSchemas = AzerPlugin.resolveCustomTypes(this.settings.customTypesYaml).types;
+    this.customSchemas = resolveCustomTypes(this.settings.customTypesYaml).types;
     this.ports = makeObsidianPorts(this.app);
 
     // ponytail: custom-type commands are registered here, so a newly added type
@@ -39,15 +39,6 @@ export default class AzerPlugin extends Plugin {
     registerAiCommands(this);
 
     this.addSettingTab(new AzerSettingTab(this.app, this));
-  }
-
-  /** Parse + validate the YAML block, turning a parse throw into one error. */
-  static resolveCustomTypes(yaml: string): CustomTypesResult {
-    try {
-      return validateCustomTypes(parseYaml(yaml));
-    } catch (e) {
-      return { types: [], errors: [e instanceof Error ? e.message : String(e)] };
-    }
   }
 
   /** Folders owned by custom types — excluded from the campaign picker. */

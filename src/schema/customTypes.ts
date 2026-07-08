@@ -1,4 +1,5 @@
 import { ALL_TYPES, type FieldSpec, type TypeSchema } from "./types";
+import { AZER_TYPE_KEY } from "./frontmatter";
 
 const KEBAB = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const BUILT_IN: ReadonlySet<string> = new Set(ALL_TYPES);
@@ -60,8 +61,8 @@ export function validateCustomTypes(parsed: unknown): CustomTypesResult {
     }
     seen.add(id);
 
-    const label = typeof entry.label === "string" && entry.label.trim() !== "" ? entry.label : labelFromId(id);
-    const defaultFolder = typeof entry.folder === "string" && entry.folder.trim() !== "" ? entry.folder : id;
+    const label = typeof entry.label === "string" && entry.label.trim() !== "" ? entry.label.trim() : labelFromId(id);
+    const defaultFolder = typeof entry.folder === "string" && entry.folder.trim() !== "" ? entry.folder.trim() : id;
     const bodyTemplate = typeof entry.body === "string" ? entry.body : "";
 
     const fields: FieldSpec[] = [];
@@ -75,7 +76,12 @@ export function validateCustomTypes(parsed: unknown): CustomTypesResult {
             errors.push(`${id}: field ${j + 1} needs a key.`);
             return;
           }
-          fields.push({ key: f.key, default: f.list === true ? [] : "" });
+          const key = f.key.trim();
+          if (key === AZER_TYPE_KEY) {
+            errors.push(`${id}: field key "${AZER_TYPE_KEY}" is reserved.`);
+            return;
+          }
+          fields.push({ key, default: f.list === true ? [] : "" });
         });
       }
     }

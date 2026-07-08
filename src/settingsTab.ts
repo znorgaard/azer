@@ -1,7 +1,8 @@
 import { type App, PluginSettingTab, Setting } from "obsidian";
 import { ALL_TYPES, SCHEMAS } from "./schema/types";
 import { DEFAULT_SETTINGS, getApiKey, setApiKey } from "./settings";
-import AzerPlugin from "./main";
+import { resolveCustomTypes } from "./schema/resolveCustomTypes";
+import type AzerPlugin from "./main";
 
 // Shown as placeholder in the empty custom-types box — mirrors the README example.
 const CUSTOM_TYPES_EXAMPLE = `- id: faction            # required, kebab-case, unique, not a built-in id
@@ -90,9 +91,11 @@ export class AzerSettingTab extends PluginSettingTab {
 
     const status = containerEl.createDiv({ cls: "setting-item-description" });
     const renderStatus = (yaml: string): void => {
-      const { types, errors } = AzerPlugin.resolveCustomTypes(yaml);
+      const { types, errors } = resolveCustomTypes(yaml);
       status.empty();
-      status.createDiv({ text: `${types.length} custom type${types.length === 1 ? "" : "s"} loaded.` });
+      status.createDiv({
+        text: `${types.length} custom type${types.length === 1 ? "" : "s"} valid (reload to apply).`,
+      });
       for (const err of errors) status.createDiv({ text: err });
     };
 

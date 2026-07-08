@@ -69,6 +69,17 @@ describe("validateCustomTypes", () => {
     expect(r.errors).toHaveLength(1);
   });
 
+  it("rejects a field that reuses the reserved azer-type key, keeping the type", () => {
+    const r = validateCustomTypes([{ id: "faction", fields: [{ key: "azer-type" }, { key: "leader" }] }]);
+    expect(r.types[0].fields).toEqual([{ key: "leader", default: "" }]);
+    expect(r.errors).toHaveLength(1);
+  });
+
+  it("trims a stored label, folder, and field key", () => {
+    const r = validateCustomTypes([{ id: "faction", label: " Faction ", folder: " Factions ", fields: [{ key: " leader " }] }]);
+    expect(r.types[0]).toMatchObject({ label: "Faction", defaultFolder: "Factions", fields: [{ key: "leader", default: "" }] });
+  });
+
   it("errors but keeps the type when fields is not a list", () => {
     const r = validateCustomTypes([{ id: "faction", fields: { key: "leader" } }]);
     expect(r.types.map((t) => t.azerType)).toEqual(["faction"]);
