@@ -1,4 +1,4 @@
-import { Notice, Plugin, TFile, normalizePath } from "obsidian";
+import { type Editor, Notice, Plugin, TFile, normalizePath } from "obsidian";
 import { createTypedNote } from "./commands/newNote";
 import { makeObsidianPorts } from "./obsidianPorts";
 import { promptForNewNote } from "./nameModal";
@@ -13,6 +13,35 @@ import { registerAiCommands } from "./commands/aiCommands";
 import { campaignContext } from "./campaignScan";
 import { campaignPicker, scopedFolder } from "./campaign";
 
+// Live backlinks table via Obsidian's native Bases: every note that links to the
+// current note, grouped by azer-type. `this.file` = the note the block lives in.
+// Bases can't group by a hyphenated property directly, so `Azer_Type` aliases it
+// into a formula; `info` merges role/summary so one column covers every type.
+// Bases has no per-target link-count function — the built-in Backlinks panel
+// still owns that number.
+const BACKLINKS_BASE_BLOCK = `\`\`\`base
+filters:
+  and:
+    - file.hasLink(this.file)
+formulas:
+  info: role + summary
+  Azer_Type: note["azer-type"]
+views:
+  - type: table
+    name: Backlinks
+    groupBy:
+      property: formula.Azer_Type
+      direction: DESC
+    order:
+      - file.name
+      - formula.info
+      - file.mtime
+    sort:
+      - property: formula.info
+        direction: DESC
+\`\`\`
+`;
+
 export default class AzerPlugin extends Plugin {
   settings: AzerSettings = mergeSettings(null);
   /** All note types, resolved from azer.yaml on load. */
@@ -25,6 +54,12 @@ export default class AzerPlugin extends Plugin {
 
     registerAzerTable(this);
     registerAiCommands(this);
+    this.addCommand({
+      id: "insert-backlinks-table",
+      name: "Insert backlinks table",
+      editorCallback: (editor: Editor) =>
+        editor.replaceSelection(BACKLINKS_BASE_BLOCK),
+    });
     this.addSettingTab(new AzerSettingTab(this.app, this));
 
     // Resolving note types reads azer.yaml, but the vault file index isn't

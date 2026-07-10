@@ -50,6 +50,30 @@ export const DEFAULT_TYPES_YAML = `# Azer note types — edit this file to add, 
 
     ## Connections
 
+    ## Backlinks
+
+    \`\`\`base
+    filters:
+      and:
+        - file.hasLink(this.file)
+    formulas:
+      info: role + summary
+      Azer_Type: note["azer-type"]
+    views:
+      - type: table
+        name: Backlinks
+        groupBy:
+          property: formula.Azer_Type
+          direction: DESC
+        order:
+          - file.name
+          - formula.info
+          - file.mtime
+        sort:
+          - property: formula.info
+            direction: DESC
+    \`\`\`
+
 - id: session
   label: Session
   folder: Sessions
@@ -97,6 +121,30 @@ export const DEFAULT_TYPES_YAML = `# Azer note types — edit this file to add, 
 
     ## Loot
 
+    ## Backlinks
+
+    \`\`\`base
+    filters:
+      and:
+        - file.hasLink(this.file)
+    formulas:
+      info: role + summary
+      Azer_Type: note["azer-type"]
+    views:
+      - type: table
+        name: Backlinks
+        groupBy:
+          property: formula.Azer_Type
+          direction: DESC
+        order:
+          - file.name
+          - formula.info
+          - file.mtime
+        sort:
+          - property: formula.info
+            direction: DESC
+    \`\`\`
+
 - id: pc
   label: PC
   folder: PCs
@@ -107,6 +155,30 @@ export const DEFAULT_TYPES_YAML = `# Azer note types — edit this file to add, 
     ## Background
 
     ## Notes
+
+    ## Backlinks
+
+    \`\`\`base
+    filters:
+      and:
+        - file.hasLink(this.file)
+    formulas:
+      info: role + summary
+      Azer_Type: note["azer-type"]
+    views:
+      - type: table
+        name: Backlinks
+        groupBy:
+          property: formula.Azer_Type
+          direction: DESC
+        order:
+          - file.name
+          - formula.info
+          - file.mtime
+        sort:
+          - property: formula.info
+            direction: DESC
+    \`\`\`
 
 - id: table
   label: Table
