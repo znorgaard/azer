@@ -42,8 +42,12 @@ export function validateCustomTypes(parsed: unknown): CustomTypesResult {
       return;
     }
     const rawId = entry.id;
-    if (typeof rawId !== "string" || rawId.trim() === "") {
+    if (rawId === undefined || rawId === null) {
       errors.push(`Entry ${i + 1}: id is required.`);
+      return;
+    }
+    if (typeof rawId !== "string" || rawId.trim() === "") {
+      errors.push(`Entry ${i + 1}: id must be a non-empty string.`);
       return;
     }
     // Trim like label/folder/key so a quoted `id: "faction "` doesn't fail the
@@ -82,8 +86,12 @@ export function validateCustomTypes(parsed: unknown): CustomTypesResult {
       } else {
         const seenKeys = new Set<string>();
         rawFields.forEach((f, j) => {
-          if (!isMapping(f) || typeof f.key !== "string" || f.key.trim() === "") {
+          if (!isMapping(f) || f.key === undefined || f.key === null) {
             errors.push(`${id}: field ${j + 1} needs a key.`);
+            return;
+          }
+          if (typeof f.key !== "string" || f.key.trim() === "") {
+            errors.push(`${id}: field ${j + 1} key must be a non-empty string.`);
             return;
           }
           const key = f.key.trim();
@@ -94,6 +102,12 @@ export function validateCustomTypes(parsed: unknown): CustomTypesResult {
           if (seenKeys.has(key)) {
             errors.push(`${id}: duplicate field key "${key}".`);
             return;
+          }
+          // Report a present-but-wrong-type `list` like the label/folder/body
+          // checks above, so a `list: "true"` string doesn't silently become a
+          // scalar; the field is still built (only `list: true` makes a list).
+          if (f.list !== undefined && typeof f.list !== "boolean") {
+            errors.push(`${id}: field "${key}" list must be true or false.`);
           }
           seenKeys.add(key);
           fields.push({ key, default: f.list === true ? [] : "" });

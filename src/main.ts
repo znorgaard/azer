@@ -87,7 +87,8 @@ export default class AzerPlugin extends Plugin {
   folderExclusions(): ReadonlySet<string> {
     // Include the table fallback folder so a vault that deleted the `table` type
     // (Generate Table still writes there via TABLE_SCHEMA) doesn't surface
-    // Tables/ as a campaign. tableSchema() de-dupes when the entry is present.
+    // Tables/ as a campaign. When the `table` type is present its folder appears
+    // twice; typeFolderNames' Set collapses the duplicate.
     return typeFolderNames([
       ...this.schemas.map((s) => s.defaultFolder),
       this.tableSchema().defaultFolder,

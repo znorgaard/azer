@@ -65,18 +65,20 @@ or remove types:
     ## Members
 ```
 
-A field marked with the literal `list: true` starts that frontmatter key as an
-empty list; anything else (including `list: yes`) is a scalar and starts as an
-empty string. Invalid entries are skipped and reported in the developer console,
-so one typo doesn't drop the rest.
+A field with `list: true` starts that frontmatter key as an empty list;
+otherwise it's a scalar and starts as an empty string. Use the literal `true` —
+YAML's other truthy spellings (`yes`, `on`) can be read as booleans or as plain
+strings depending on the parser, so don't rely on them. Invalid entries are
+skipped and reported in the developer console, so one typo doesn't drop the rest.
 
 Changes take effect after you **reload Obsidian** (or toggle the plugin off and
 on) — a type's "New X" command is registered when the plugin loads. Deleting the
 whole `azer.yaml` re-seeds the built-in defaults on the next reload; an empty
 list (`[]`) means "no note types".
 
-> **Note:** `azer.yaml` isn't a Markdown note, so Obsidian opens it in your
-> system's default editor rather than in-app.
+> **Note:** `azer.yaml` isn't a Markdown note. If you have a YAML-editor
+> community plugin it opens in-app; otherwise Obsidian hands it to your system's
+> default editor.
 
 ## Random tables
 

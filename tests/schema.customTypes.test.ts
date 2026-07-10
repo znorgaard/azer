@@ -46,6 +46,15 @@ describe("validateCustomTypes", () => {
     });
   });
 
+  it("distinguishes a missing id from a present-but-non-string one", () => {
+    const r = validateCustomTypes([{ label: "No id" }, { id: 2024 }]);
+    expect(r.types).toEqual([]);
+    expect(r.errors).toEqual([
+      "Entry 1: id is required.",
+      "Entry 2: id must be a non-empty string.",
+    ]);
+  });
+
   it("rejects non-kebab ids and duplicates, keeping valid ones (former built-in ids are now allowed)", () => {
     const r = validateCustomTypes([
       { id: "Faction" }, // not kebab-case
@@ -94,6 +103,21 @@ describe("validateCustomTypes", () => {
       "faction: folder must be a string.",
       "faction: body must be a string.",
     ]);
+  });
+
+  it("distinguishes a missing field key from a present-but-non-string one", () => {
+    const r = validateCustomTypes([{ id: "faction", fields: [{ list: true }, { key: 42 }, { key: "leader" }] }]);
+    expect(r.types[0].fields).toEqual([{ key: "leader", default: "" }]);
+    expect(r.errors).toEqual([
+      "faction: field 1 needs a key.",
+      "faction: field 2 key must be a non-empty string.",
+    ]);
+  });
+
+  it("reports a non-boolean list but still builds the field as a scalar", () => {
+    const r = validateCustomTypes([{ id: "faction", fields: [{ key: "goals", list: "true" }] }]);
+    expect(r.types[0].fields).toEqual([{ key: "goals", default: "" }]);
+    expect(r.errors).toEqual(['faction: field "goals" list must be true or false.']);
   });
 
   it("rejects a duplicate field key, keeping the first occurrence", () => {
