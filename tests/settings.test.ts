@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   API_KEY_LS_KEY,
   DEFAULT_SETTINGS,
-  folderFor,
   getApiKey,
   mergeSettings,
   setApiKey,
@@ -22,34 +21,22 @@ class FakeLocalStorageApp implements LocalStorageApp {
 }
 
 describe("settings", () => {
-  it("defaults the model and folders", () => {
+  it("defaults to sensible values", () => {
     expect(DEFAULT_SETTINGS.model).toBe("claude-opus-4-8");
-    expect(DEFAULT_SETTINGS.folders.npc).toBe("NPCs");
-    expect(DEFAULT_SETTINGS.folders["adventure-log"]).toBe("Adventure Log");
+    expect(DEFAULT_SETTINGS.maxTokens).toBe(4096);
+    expect(DEFAULT_SETTINGS.recapsFolder).toBe("Recaps");
   });
 
-  it("resolves a folder, honoring overrides", () => {
-    expect(folderFor(DEFAULT_SETTINGS, "pc")).toBe("PCs");
-    const custom = { ...DEFAULT_SETTINGS, folders: { ...DEFAULT_SETTINGS.folders, pc: "Party" } };
-    expect(folderFor(custom, "pc")).toBe("Party");
-  });
-
-  it("collects every type folder plus the recaps folder as lower-cased non-campaign names", () => {
-    const names = typeFolderNames(DEFAULT_SETTINGS);
+  it("collects folder names as lower-cased first path segments", () => {
+    const names = typeFolderNames(["NPCs", "Types/Factions", "Recaps"]);
     expect(names.has("npcs")).toBe(true);
-    expect(names.has("adventure log")).toBe(true);
+    expect(names.has("types")).toBe(true); // nested "Types/Factions" reduces to "Types"
+    expect(names.has("factions")).toBe(false);
     expect(names.has("recaps")).toBe(true);
-    expect(names.has("NPCs")).toBe(false); // stored lower-cased
-    expect(names.has("enyr")).toBe(false);
-    // every configured folder is present (lower-cased)
-    for (const folder of Object.values(DEFAULT_SETTINGS.folders)) expect(names.has(folder.toLowerCase())).toBe(true);
   });
 
-  it("reduces a multi-segment type folder to its lower-cased first segment", () => {
-    const custom = { ...DEFAULT_SETTINGS, folders: { ...DEFAULT_SETTINGS.folders, npc: "Types/NPCs" } };
-    const names = typeFolderNames(custom);
-    expect(names.has("types")).toBe(true);
-    expect(names.has("Types/NPCs")).toBe(false);
+  it("ignores blank folder segments", () => {
+    expect(typeFolderNames(["", "  ", "/leading"]).size).toBe(0);
   });
 
   it("returns empty string when no API key is set", () => {
@@ -72,23 +59,12 @@ describe("settings", () => {
 });
 
 describe("mergeSettings", () => {
-  it("does not alias DEFAULT_SETTINGS.folders (mutating the result is safe)", () => {
-    const s = mergeSettings(null);
-    s.folders.npc = "Changed";
-    expect(DEFAULT_SETTINGS.folders.npc).toBe("NPCs");
-  });
-
-  it("falls back to defaults for null/empty data", () => {
-    const s = mergeSettings(null);
-    expect(s.model).toBe(DEFAULT_SETTINGS.model);
-    expect(s.folders).toEqual(DEFAULT_SETTINGS.folders);
-  });
-
-  it("layers saved overrides on top of current defaults", () => {
-    const s = mergeSettings({ model: "claude-custom", folders: { pc: "Party" } });
-    expect(s.model).toBe("claude-custom");
-    expect(s.folders.pc).toBe("Party"); // saved override
-    expect(s.folders.npc).toBe("NPCs"); // default retained for unsaved type
+  it("merges persisted values over defaults without shared mutable state", () => {
+    const s = mergeSettings({ model: "claude-sonnet-5", recapsFolder: "Logs/Recaps" });
+    expect(s.model).toBe("claude-sonnet-5");
+    expect(s.recapsFolder).toBe("Logs/Recaps");
+    expect(s.maxTokens).toBe(DEFAULT_SETTINGS.maxTokens); // default retained
+    expect(mergeSettings(null)).toEqual(DEFAULT_SETTINGS);
   });
 });
 

@@ -1,6 +1,6 @@
 import { type App, PluginSettingTab, Setting } from "obsidian";
-import { ALL_TYPES, SCHEMAS } from "./schema/types";
 import { DEFAULT_SETTINGS, getApiKey, setApiKey } from "./settings";
+import { CONFIG_PATH } from "./schema/loadTypes";
 import type AzerPlugin from "./main";
 
 export class AzerSettingTab extends PluginSettingTab {
@@ -56,14 +56,17 @@ export class AzerSettingTab extends PluginSettingTab {
         }),
       );
 
-    new Setting(containerEl).setName("Default folders").setHeading();
-    for (const type of ALL_TYPES) {
-      new Setting(containerEl).setName(SCHEMAS[type].label).addText((text) =>
-        text.setValue(this.plugin.settings.folders[type]).onChange(async (value) => {
-          this.plugin.settings.folders[type] = value.trim() || SCHEMAS[type].defaultFolder;
-          await this.plugin.saveSettings();
-        }),
-      );
-    }
+    new Setting(containerEl).setName("Advanced").setHeading();
+
+    const notesDesc = new DocumentFragment();
+    notesDesc.appendText("Note types and their templates are defined in ");
+    const configLink = notesDesc.createEl("a", { text: CONFIG_PATH, href: "#" });
+    configLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      void this.plugin.openConfigFile();
+    });
+    notesDesc.appendText(" at your vault root. Edit that file and reload Obsidian to apply changes.");
+
+    new Setting(containerEl).setName("Note types").setDesc(notesDesc);
   }
 }

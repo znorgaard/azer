@@ -8,7 +8,7 @@ import type { NoteHandle, NotePorts } from "../ports";
  * and open it. Refuses to overwrite an existing note (surfacing the native
  * conflict rather than clobbering).
  *
- * `folder` is caller-supplied (e.g. `folderFor(settings, type)`) and assumed
+ * `folder` is caller-supplied (e.g. `schema.defaultFolder`, campaign-scoped) and assumed
  * valid. If `processFrontmatter` fails after the file is created, the note is
  * left with the body but no frontmatter — the same partially-created state
  * Obsidian itself would leave on a write failure.

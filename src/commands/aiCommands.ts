@@ -5,8 +5,7 @@ import { recap } from "../ai/recap";
 import { type AdventureLogNote, forCampaign, selectForRecap, stripFrontmatter } from "../notes/adventureLog";
 import { createTypedNote } from "./newNote";
 import { makeObsidianPorts } from "../obsidianPorts";
-import { folderFor, getApiKey, typeFolderNames } from "../settings";
-import { getSchema } from "../schema/types";
+import { getApiKey } from "../settings";
 import { AZER_TYPE_KEY } from "../schema/frontmatter";
 import type { NotePorts } from "../ports";
 import type AzerPlugin from "../main";
@@ -54,14 +53,15 @@ export function registerAiCommands(plugin: AzerPlugin): void {
     callback: () => {
       if (!requireKey()) return;
       const { refs, activePath } = campaignContext(plugin.app);
-      const state = campaignPicker(refs, activePath, typeFolderNames(plugin.settings));
+      const state = campaignPicker(refs, activePath, plugin.folderExclusions());
       promptForTable(plugin.app, state, async ({ name, prompt, campaign }) => {
         const notice = new Notice("Generating table…", 0);
         try {
           const body = fencedAzerTable(await generateTable(ask, prompt));
           const ports = makeObsidianPorts(plugin.app);
-          const folder = scopedFolder(campaign, folderFor(plugin.settings, "table"));
-          await createTypedNote(ports, getSchema("table"), name, folder, body);
+          const schema = plugin.tableSchema();
+          const folder = scopedFolder(campaign, schema.defaultFolder);
+          await createTypedNote(ports, schema, name, folder, body);
         } catch (err) {
           new Notice(err instanceof AIError ? err.message : String(err));
         } finally {
@@ -77,7 +77,7 @@ export function registerAiCommands(plugin: AzerPlugin): void {
     callback: () => {
       if (!requireKey()) return;
       const { refs, activePath } = campaignContext(plugin.app);
-      const exclude = typeFolderNames(plugin.settings);
+      const exclude = plugin.folderExclusions();
       const state = campaignPicker(refs, activePath, exclude);
       promptForRecap(plugin.app, state, async ({ count, campaign }) => {
         const all = await gatherAdventureLog(plugin.app);
