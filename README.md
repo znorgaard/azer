@@ -8,8 +8,11 @@ table generation + recaps — over plain Markdown in your own vault.
 - **Typed notes.** Commands to create **NPC, Session, Adventure Log, Location,
   PC, and Table** notes, each with a starter body and frontmatter (`azer-type` +
   fields). Cross-reference them with normal `[[wikilinks]]` — backlinks and
-  graph come from Obsidian. All note types live in `azer.yaml` at your vault
-  root, so you can add your own (see *Note types*).
+  graph come from Obsidian. NPC, Location, and PC notes also carry a
+  **Backlinks** table: a grouped [Bases](https://help.obsidian.md/bases) view of
+  every note linking to them, grouped by `azer-type`. The **Insert backlinks
+  table** command drops the same block into any note. All note types live in
+  `azer.yaml` at your vault root, so you can add your own (see *Note types*).
 - **Multiple campaigns per vault** via a top-level Campaign folder; commands are
   campaign-scoped.
 - **Random tables** as a physical-die lookup: author a table in an `azer-table`
@@ -33,11 +36,11 @@ Files land in the type's default folder (under the campaign folder when scoped).
 
 | Type | Default folder | Frontmatter fields | Body scaffold |
 | --- | --- | --- | --- |
-| **NPC** | `NPCs` | `role`, `species`, `location`, `dndb_stats` | Appearance · Character Details · Motivations · Secrets · Items · Connections |
+| **NPC** | `NPCs` | `role`, `species`, `location`, `dndb_stats` | Appearance · Character Details · Motivations · Secrets · Items · Connections · Backlinks |
 | **Session** | `Sessions` | `date`, `npcs` (list), `locations` (list) | Overview · Beats · Encounters (with a Name/Intro/Experience/DnD Beyond table) · For the DM · Follow Up · Log |
 | **Adventure Log** | `Adventure Log` | `date` | *(free-form prose — no sections)* |
-| **Location** | `Locations` | `summary`, `parent` | Description · Points of Interest · Key NPCs · Loot |
-| **PC** | `PCs` | `player`, `dndb_stats` | Background · Notes |
+| **Location** | `Locations` | `summary`, `parent` | Description · Points of Interest · Key NPCs · Loot · Backlinks |
+| **PC** | `PCs` | `player`, `dndb_stats` | Background · Notes · Backlinks |
 | **Table** | `Tables` | *(none)* | A starter `azer-table` code block (see below) |
 
 The fields are just a starting point — add your own frontmatter freely; `[[wikilinks]]`
