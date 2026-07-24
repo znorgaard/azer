@@ -17,17 +17,15 @@ export function addCampaignField(
   let value = state.selected;
   new Setting(containerEl).setName("Campaign").addText((text) => {
     text.setPlaceholder("Campaign (new or existing)").setValue(state.selected).onChange((v) => (value = v));
-    const doc = text.inputEl.ownerDocument;
     const listId = `azer-campaigns-${datalistSeq++}`;
-    const datalist = doc.createElement("datalist");
-    datalist.id = listId;
+    // Build the <datalist> in the input's own document (popout-window safe) via
+    // Obsidian's createEl helper; it's linked to the input by id, so its DOM
+    // position doesn't matter and it's cleaned up with the rest of containerEl.
+    const datalist = containerEl.createEl("datalist", { attr: { id: listId } });
     for (const opt of state.options) {
-      const option = doc.createElement("option");
-      option.value = opt;
-      datalist.appendChild(option);
+      datalist.createEl("option", { value: opt });
     }
     text.inputEl.setAttribute("list", listId);
-    text.inputEl.insertAdjacentElement("afterend", datalist);
     if (onEnter) {
       text.inputEl.addEventListener("keydown", (e) => {
         if (e.key === "Enter") onEnter();
