@@ -49,7 +49,7 @@ export function registerAiCommands(plugin: AzerPlugin): void {
 
   plugin.addCommand({
     id: "generate-table",
-    name: "Generate Table (AI)",
+    name: "Generate table (AI)",
     callback: () => {
       if (!requireKey()) return;
       const { refs, activePath } = campaignContext(plugin.app);
@@ -73,7 +73,7 @@ export function registerAiCommands(plugin: AzerPlugin): void {
 
   plugin.addCommand({
     id: "recap-sessions",
-    name: "Recap Recent Sessions (AI)",
+    name: "Recap recent sessions (AI)",
     callback: () => {
       if (!requireKey()) return;
       const { refs, activePath } = campaignContext(plugin.app);
@@ -150,7 +150,7 @@ class TablePromptModal extends Modal {
     super(app);
   }
   onOpen(): void {
-    this.titleEl.setText("Generate Table (AI)");
+    this.titleEl.setText("Generate table (AI)");
     new Setting(this.contentEl).setName("Table name").addText((t) => {
       t.onChange((v) => (this.name = v));
       window.setTimeout(() => t.inputEl.focus(), 0);
@@ -192,7 +192,7 @@ class RecapModal extends Modal {
     super(app);
   }
   onOpen(): void {
-    this.titleEl.setText("Recap Recent Sessions (AI)");
+    this.titleEl.setText("Recap recent sessions (AI)");
     new Setting(this.contentEl).setName("How many recent sessions?").addText((t) => {
       t.setValue(String(this.count)).onChange((v) => {
         const n = Number.parseInt(v, 10);

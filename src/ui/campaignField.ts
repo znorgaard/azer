@@ -17,14 +17,10 @@ export function addCampaignField(
   let value = state.selected;
   new Setting(containerEl).setName("Campaign").addText((text) => {
     text.setPlaceholder("Campaign (new or existing)").setValue(state.selected).onChange((v) => (value = v));
-    const doc = text.inputEl.ownerDocument;
     const listId = `azer-campaigns-${datalistSeq++}`;
-    const datalist = doc.createElement("datalist");
-    datalist.id = listId;
+    const datalist = createEl("datalist", { attr: { id: listId } });
     for (const opt of state.options) {
-      const option = doc.createElement("option");
-      option.value = opt;
-      datalist.appendChild(option);
+      datalist.createEl("option", { value: opt });
     }
     text.inputEl.setAttribute("list", listId);
     text.inputEl.insertAdjacentElement("afterend", datalist);
