@@ -1,11 +1,37 @@
 # Contributing
 
+## Setup
+
+CI runs on Node 20; use the same locally.
+
 ```bash
 npm install
-npx tsc --noEmit   # type-check (strict)
-npm test           # unit tests (Vitest)
-npm run build      # type-check + bundle to main.js
 ```
+
+## Checks
+
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs these on every pull request; all three must pass:
+
+```bash
+npm run lint    # ESLint over src/ and tests/
+npm run build   # type-check (strict) + bundle to main.js
+npm test        # unit tests (Vitest)
+```
+
+While iterating:
+
+```bash
+npx tsc --noEmit     # type-check only, no bundle
+npm run test:watch   # Vitest watch mode
+npm run dev          # unminified build with inline sourcemaps
+```
+
+## Trying it in a vault
+
+Build, then symlink or copy `manifest.json` and `main.js` into `<vault>/.obsidian/plugins/azer/` and enable Azer in Settings → Community plugins.
+After a rebuild, toggle the plugin off and on (or reload Obsidian) to pick up the change.
+
+## Layout and conventions
 
 - Source lives in `src/`, split by responsibility (`ai/`, `commands/`,
   `notes/`, `schema/`, `tables/`, `ui/`). Each module declares its exports.
