@@ -14,12 +14,51 @@ export const DEFAULT_SETTINGS: AzerSettings = {
 };
 
 /**
- * Merge persisted plugin data over the defaults into a fresh settings object
- * (no shared mutable state with `DEFAULT_SETTINGS`).
+ * Build a fresh settings object from persisted plugin data, coercing every
+ * field — `data.json` may be hand-edited, sync-conflicted, or written by a
+ * different plugin version, so stored values get the same validation as UI
+ * input. Missing/invalid fields fall back to defaults; unknown keys drop.
  */
 export function mergeSettings(loaded: unknown): AzerSettings {
-  const data = (loaded ?? {}) as Partial<AzerSettings>;
-  return { ...DEFAULT_SETTINGS, ...data };
+  const data = (loaded ?? {}) as Partial<Record<keyof AzerSettings, unknown>>;
+  return {
+    model: coerceModel(data.model),
+    maxTokens: coerceMaxTokens(data.maxTokens),
+    recapsFolder: coerceRecapsFolder(data.recapsFolder),
+  };
+}
+
+/** Per-key coercion of raw values, shared by `mergeSettings` and the settings tab. */
+export const SETTING_COERCERS: { [K in keyof AzerSettings]: (value: unknown) => AzerSettings[K] } = {
+  model: coerceModel,
+  maxTokens: coerceMaxTokens,
+  recapsFolder: coerceRecapsFolder,
+};
+
+/** Trim a string value, falling back to `fallback` for blanks and non-strings. */
+function coerceTrimmed(value: unknown, fallback: string): string {
+  if (typeof value !== "string") return fallback;
+  return value.trim() || fallback;
+}
+
+/** Coerce a raw settings-control value into a valid `model`. */
+export function coerceModel(value: unknown): string {
+  return coerceTrimmed(value, DEFAULT_SETTINGS.model);
+}
+
+/**
+ * Coerce a raw settings-control value into a valid `maxTokens`: a positive
+ * integer (fractions truncate, matching the old parseInt path), anything else
+ * falls back to the default.
+ */
+export function coerceMaxTokens(value: unknown): number {
+  const n = typeof value === "string" ? Number.parseInt(value, 10) : typeof value === "number" ? Math.trunc(value) : Number.NaN;
+  return Number.isFinite(n) && n >= 1 ? n : DEFAULT_SETTINGS.maxTokens;
+}
+
+/** Coerce a raw settings-control value into a valid `recapsFolder`. */
+export function coerceRecapsFolder(value: unknown): string {
+  return coerceTrimmed(value, DEFAULT_SETTINGS.recapsFolder);
 }
 
 /**
