@@ -1,6 +1,6 @@
 {
   "name": "azer-obsidian",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Azer — D&D session toolkit for Obsidian",
   "main": "main.js",
   "type": "module",
