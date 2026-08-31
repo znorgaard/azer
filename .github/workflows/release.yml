@@ -26,9 +26,15 @@ jobs:
           subject-path: |
             main.js
             manifest.json
-      - name: Create release
+      - name: Create release or update its assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # If a release for this tag already exists, replace its assets with the attested
+        # builds from this run instead of erroring or drafting a duplicate.
         run: |
           tag="${GITHUB_REF#refs/tags/}"
-          gh release create "$tag" --title="$tag" --draft main.js manifest.json
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" main.js manifest.json --clobber
+          else
+            gh release create "$tag" --title="$tag" --draft main.js manifest.json
+          fi
