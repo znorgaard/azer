@@ -1,15 +1,19 @@
 import { describe, expect, it } from "vitest";
 import {
   API_KEY_LS_KEY,
+  DEFAULT_API_KEY_SECRET,
   DEFAULT_SETTINGS,
+  FALLBACK_API_KEY_SECRET,
   coerceMaxTokens,
   coerceModel,
   coerceRecapsFolder,
-  getApiKey,
+  coerceSecretName,
   mergeSettings,
-  setApiKey,
+  migrateApiKeyToSecretStorage,
+  resolveApiKey,
   typeFolderNames,
   type LocalStorageApp,
+  type SecretStorageLike,
 } from "../src/settings";
 
 class FakeLocalStorageApp implements LocalStorageApp {
@@ -20,6 +24,16 @@ class FakeLocalStorageApp implements LocalStorageApp {
   saveLocalStorage(key: string, value: string | null): void {
     if (value === null) this.store.delete(key);
     else this.store.set(key, value);
+  }
+}
+
+class FakeSecretStorage implements SecretStorageLike {
+  secrets = new Map<string, string>();
+  getSecret(id: string): string | null {
+    return this.secrets.has(id) ? (this.secrets.get(id) as string) : null;
+  }
+  setSecret(id: string, secret: string): void {
+    this.secrets.set(id, secret);
   }
 }
 
@@ -42,22 +56,125 @@ describe("settings", () => {
     expect(typeFolderNames(["", "  ", "/leading"]).size).toBe(0);
   });
 
-  it("returns empty string when no API key is set", () => {
-    expect(getApiKey(new FakeLocalStorageApp())).toBe("");
+  it("resolves the API key from the named secret", () => {
+    const secrets = new FakeSecretStorage();
+    secrets.setSecret("anthropic", "  sk-ant-123  ");
+    expect(resolveApiKey(secrets, "anthropic")).toBe("sk-ant-123"); // trimmed
+    expect(resolveApiKey(secrets, "missing")).toBe("");
+    expect(resolveApiKey(secrets, "")).toBe("");
   });
 
-  it("stores a trimmed API key and reads it back", () => {
-    const app = new FakeLocalStorageApp();
-    setApiKey(app, "  sk-ant-123  ");
-    expect(getApiKey(app)).toBe("sk-ant-123");
+  it("treats a throwing secret lookup as unset instead of crashing the command", () => {
+    const secrets = new FakeSecretStorage();
+    secrets.getSecret = () => {
+      throw new Error("malformed id");
+    };
+    expect(resolveApiKey(secrets, "My Key!")).toBe("");
+  });
+});
+
+describe("migrateApiKeyToSecretStorage", () => {
+  it("does nothing when there is no legacy key", () => {
+    const local = new FakeLocalStorageApp();
+    const secrets = new FakeSecretStorage();
+    expect(migrateApiKeyToSecretStorage(local, secrets, "")).toBeNull();
+    expect(secrets.secrets.size).toBe(0);
   });
 
-  it("clears the key when set to blank", () => {
-    const app = new FakeLocalStorageApp();
-    setApiKey(app, "sk-ant-123");
-    setApiKey(app, "   ");
-    expect(getApiKey(app)).toBe("");
-    expect(app.store.has(API_KEY_LS_KEY)).toBe(false);
+  it("moves the legacy key into the shared secret and clears the plaintext copy", () => {
+    const local = new FakeLocalStorageApp();
+    local.saveLocalStorage(API_KEY_LS_KEY, "sk-ant-legacy");
+    const secrets = new FakeSecretStorage();
+    expect(migrateApiKeyToSecretStorage(local, secrets, "")).toBe(DEFAULT_API_KEY_SECRET);
+    expect(secrets.getSecret(DEFAULT_API_KEY_SECRET)).toBe("sk-ant-legacy");
+    expect(local.store.has(API_KEY_LS_KEY)).toBe(false);
+  });
+
+  it("adopts the shared secret name when it already holds the same key", () => {
+    const local = new FakeLocalStorageApp();
+    local.saveLocalStorage(API_KEY_LS_KEY, "sk-ant-same");
+    const secrets = new FakeSecretStorage();
+    secrets.setSecret(DEFAULT_API_KEY_SECRET, "sk-ant-same");
+    expect(migrateApiKeyToSecretStorage(local, secrets, "")).toBe(DEFAULT_API_KEY_SECRET);
+    expect(local.store.has(API_KEY_LS_KEY)).toBe(false);
+  });
+
+  it("adopts the shared name even when its stored value is whitespace-padded", () => {
+    // resolveApiKey trims on read, so a padded copy is the same key.
+    const local = new FakeLocalStorageApp();
+    local.saveLocalStorage(API_KEY_LS_KEY, "sk-ant-same");
+    const secrets = new FakeSecretStorage();
+    secrets.setSecret(DEFAULT_API_KEY_SECRET, "  sk-ant-same  ");
+    expect(migrateApiKeyToSecretStorage(local, secrets, "")).toBe(DEFAULT_API_KEY_SECRET);
+    expect(secrets.getSecret(FALLBACK_API_KEY_SECRET)).toBeNull(); // no duplicate
+  });
+
+  it("treats a blank shared secret as free", () => {
+    const local = new FakeLocalStorageApp();
+    local.saveLocalStorage(API_KEY_LS_KEY, "sk-ant-new");
+    const secrets = new FakeSecretStorage();
+    secrets.setSecret(DEFAULT_API_KEY_SECRET, "   ");
+    expect(migrateApiKeyToSecretStorage(local, secrets, "")).toBe(DEFAULT_API_KEY_SECRET);
+    expect(secrets.getSecret(DEFAULT_API_KEY_SECRET)).toBe("sk-ant-new");
+  });
+
+  it("uses the fallback name when the shared secret holds a different key", () => {
+    const local = new FakeLocalStorageApp();
+    local.saveLocalStorage(API_KEY_LS_KEY, "sk-ant-mine");
+    const secrets = new FakeSecretStorage();
+    secrets.setSecret(DEFAULT_API_KEY_SECRET, "sk-ant-other-plugins");
+    expect(migrateApiKeyToSecretStorage(local, secrets, "")).toBe(FALLBACK_API_KEY_SECRET);
+    expect(secrets.getSecret(DEFAULT_API_KEY_SECRET)).toBe("sk-ant-other-plugins"); // untouched
+    expect(secrets.getSecret(FALLBACK_API_KEY_SECRET)).toBe("sk-ant-mine");
+  });
+
+  it("discards the legacy copy when the configured secret exists on this device", () => {
+    const local = new FakeLocalStorageApp();
+    local.saveLocalStorage(API_KEY_LS_KEY, "sk-ant-stale");
+    const secrets = new FakeSecretStorage();
+    secrets.setSecret("my-key", "sk-ant-current");
+    expect(migrateApiKeyToSecretStorage(local, secrets, "my-key")).toBeNull();
+    expect(local.store.has(API_KEY_LS_KEY)).toBe(false);
+    expect(secrets.getSecret("my-key")).toBe("sk-ant-current"); // untouched
+  });
+
+  it("fills a synced-in name whose secret is missing on this device", () => {
+    // Settings (and so the secret NAME) sync via data.json; the secret VALUE
+    // is device-local. The legacy key is this device's only working copy.
+    const local = new FakeLocalStorageApp();
+    local.saveLocalStorage(API_KEY_LS_KEY, "sk-ant-local");
+    const secrets = new FakeSecretStorage();
+    expect(migrateApiKeyToSecretStorage(local, secrets, "my-key")).toBeNull();
+    expect(secrets.getSecret("my-key")).toBe("sk-ant-local");
+    expect(local.store.has(API_KEY_LS_KEY)).toBe(false);
+  });
+
+  it("routes to the fallback name when the configured name is not a valid secret id", () => {
+    const local = new FakeLocalStorageApp();
+    local.saveLocalStorage(API_KEY_LS_KEY, "sk-ant-local");
+    const secrets = new FakeSecretStorage();
+    expect(migrateApiKeyToSecretStorage(local, secrets, "My Key!")).toBe(FALLBACK_API_KEY_SECRET);
+    expect(secrets.getSecret(FALLBACK_API_KEY_SECRET)).toBe("sk-ant-local");
+  });
+
+  it("keeps the plaintext copy when writing the secret throws", () => {
+    const local = new FakeLocalStorageApp();
+    local.saveLocalStorage(API_KEY_LS_KEY, "sk-ant-precious");
+    const secrets = new FakeSecretStorage();
+    secrets.setSecret = () => {
+      throw new Error("keychain unavailable");
+    };
+    expect(() => migrateApiKeyToSecretStorage(local, secrets, "")).toThrow();
+    expect(local.store.get(API_KEY_LS_KEY)).toBe("sk-ant-precious"); // retried next load
+  });
+
+  it("clears a blank legacy value without creating a secret", () => {
+    const local = new FakeLocalStorageApp();
+    local.saveLocalStorage(API_KEY_LS_KEY, "   ");
+    const secrets = new FakeSecretStorage();
+    expect(migrateApiKeyToSecretStorage(local, secrets, "")).toBeNull();
+    expect(local.store.has(API_KEY_LS_KEY)).toBe(false);
+    expect(secrets.secrets.size).toBe(0);
   });
 });
 
@@ -81,7 +198,13 @@ describe("mergeSettings", () => {
 
   it("drops unknown keys from persisted data", () => {
     const s = mergeSettings({ model: "m", legacyField: true });
-    expect(Object.keys(s).sort()).toEqual(["maxTokens", "model", "recapsFolder"]);
+    expect(Object.keys(s).sort()).toEqual(["apiKeySecret", "maxTokens", "model", "recapsFolder"]);
+  });
+
+  it("carries the configured API-key secret name, defaulting to unset", () => {
+    expect(mergeSettings(null).apiKeySecret).toBe("");
+    expect(mergeSettings({ apiKeySecret: " anthropic " }).apiKeySecret).toBe("anthropic");
+    expect(mergeSettings({ apiKeySecret: 7 }).apiKeySecret).toBe("");
   });
 });
 
@@ -121,6 +244,13 @@ describe("setting coercers", () => {
     expect(coerceRecapsFolder("  Logs/Recaps  ")).toBe("Logs/Recaps");
     expect(coerceRecapsFolder("")).toBe(DEFAULT_SETTINGS.recapsFolder);
     expect(coerceRecapsFolder(undefined)).toBe(DEFAULT_SETTINGS.recapsFolder);
+  });
+
+  it("trims the secret name and treats junk as unset", () => {
+    expect(coerceSecretName("  anthropic  ")).toBe("anthropic");
+    expect(coerceSecretName("")).toBe("");
+    expect(coerceSecretName(undefined)).toBe("");
+    expect(coerceSecretName(42)).toBe("");
   });
 });
 

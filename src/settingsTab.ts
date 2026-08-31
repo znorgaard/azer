@@ -1,5 +1,5 @@
-import { type App, PluginSettingTab, Setting, type SettingDefinitionItem } from "obsidian";
-import { type AzerSettings, DEFAULT_SETTINGS, SETTING_COERCERS, getApiKey, setApiKey } from "./settings";
+import { type App, PluginSettingTab, SecretComponent, Setting, type SettingDefinitionItem } from "obsidian";
+import { type AzerSettings, DEFAULT_SETTINGS, SETTING_COERCERS } from "./settings";
 import { CONFIG_PATH } from "./schema/loadTypes";
 import type AzerPlugin from "./main";
 
@@ -11,7 +11,7 @@ function isSettingsKey(key: string): key is keyof AzerSettings {
 const LABELS = {
   apiKey: {
     name: "Anthropic API key",
-    desc: "Stored only on this device; set it on each machine. Used by the AI table and recap commands.",
+    desc: "Pick or create the keychain secret holding your key. The key stays in this device's keychain (Settings → Keychain) and is never synced; set it on each machine. Used by the AI table and recap commands.",
   },
   model: { name: "Model", desc: "Anthropic model for AI features." },
   maxTokens: { name: "Max tokens", desc: "Maximum output tokens per AI request." },
@@ -39,9 +39,9 @@ export class AzerSettingTab extends PluginSettingTab {
     return [
       {
         ...LABELS.apiKey,
-        aliases: ["claude", "anthropic"],
-        // The key lives in device-local storage, not plugin settings, so it
-        // can't be a plain control binding — see renderApiKeyControl.
+        aliases: ["claude", "anthropic", "keychain"],
+        // The key lives in the keychain; settings hold only the secret's
+        // name, chosen via SecretComponent — no plain control binding.
         render: (setting: Setting) => this.renderApiKeyControl(setting),
       },
       {
@@ -85,15 +85,16 @@ export class AzerSettingTab extends PluginSettingTab {
     this.plugin.settings[key] = SETTING_COERCERS[key](value);
   }
 
-  /** Password-style input backed by device-local storage — never synced `data.json`. */
+  /**
+   * Keychain secret picker: the chosen secret's *name* goes into settings;
+   * the key itself stays in `app.secretStorage`, never in synced `data.json`.
+   */
   private renderApiKeyControl(setting: Setting): void {
-    setting.addText((text) => {
-      text.inputEl.type = "password";
-      text
-        .setPlaceholder("sk-ant-...")
-        .setValue(getApiKey(this.app))
-        .onChange((value) => setApiKey(this.app, value));
-    });
+    setting.addComponent((el) =>
+      new SecretComponent(this.app, el)
+        .setValue(this.plugin.settings.apiKeySecret)
+        .onChange((name) => void this.setControlValue("apiKeySecret", name)),
+    );
   }
 
   private noteTypesDesc(): DocumentFragment {
