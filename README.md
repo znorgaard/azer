@@ -3,7 +3,7 @@
 Tabletop Role-Playing Game (TTRPG) note toolkit for Obsidian.
 
 ## Key Features
-- Config driven note templating with auto organization into subfolders
+- Config-driven note templating with automatic organization into subfolders
 - Weighted random table generation
 
 ### Minor Features
@@ -58,8 +58,8 @@ Deleting the whole `azer.yaml` re-seeds the built-in defaults on the next reload
 
 ## Creating Random tables
 
-Balancing ranges and probabilities across a random table is annoying, especially when using a a multi-dice table (ex. 4d6).
-Azer enables creation of random tables with arbitrary dice and weighted outcomes.
+Balancing ranges and probabilities across a random table is annoying, especially when using a multi-dice table (ex. 4d6).
+Azer enables creation of random tables with standard dice, dice pools, and weighted outcomes.
 
 To make a random table, create a fenced code block whose info string is `azer-table`.
 
@@ -96,7 +96,7 @@ And Azer renders:
 
 ## Inserting Backlinks Tables
 
-As a convenvience, Azer provides an `Insert backlinks table` command which adds a table of backlinks to the current note sorted by Azer note type.
+As a convenience, Azer provides an `Insert backlinks table` command which adds a table of backlinks to the current note sorted by Azer note type.
 By default, this same table is included in NPC, PC, and Location notes.
 
 ## AI features & your API key
@@ -104,8 +104,9 @@ By default, this same table is included in NPC, PC, and Location notes.
 The two AI commands — **Generate table (AI)** and **Recap recent sessions (AI)** — call the Anthropic API with your own key.
 You supply the key; usage is billed to your Anthropic account.
 
-When you run one of these commands, Azer sends text over the network to Anthropic's API: for **Generate Table**, the prompt you type; for **Recap Recent Sessions**, the contents + title + frontmatter of the Adventure Log notes being recapped.
-Nothing is sent unless you run one of these commands, and no other data is transmitted.
+When you run one of these commands, Azer sends text over the network to Anthropic's API: for **Generate table**, the prompt you type; for **Recap recent sessions**, each selected Adventure Log's title, `date` field, and body (with the frontmatter block removed).
+Both commands also send Azer's fixed instructions for the task.
+Nothing is sent unless you run one of these commands, and no other vault data — frontmatter, note paths, or other notes — is transmitted.
 
 ### Getting a key
 
