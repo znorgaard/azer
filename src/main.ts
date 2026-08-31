@@ -6,7 +6,7 @@ import type { TypeSchema } from "./schema/types";
 import { CONFIG_PATH, loadNoteTypes } from "./schema/loadTypes";
 import { TABLE_SCHEMA } from "./schema/defaultTypes";
 import { AzerSettingTab } from "./settingsTab";
-import { type AzerSettings, mergeSettings, typeFolderNames } from "./settings";
+import { type AzerSettings, mergeSettings, migrateApiKeyToSecretStorage, typeFolderNames } from "./settings";
 import type { NotePorts } from "./ports";
 import { registerAzerTable } from "./tables/codeBlock";
 import { registerAiCommands } from "./commands/aiCommands";
@@ -50,6 +50,17 @@ export default class AzerPlugin extends Plugin {
 
   async onload(): Promise<void> {
     await this.loadSettings();
+    // One-time move of the legacy device-local API key into the keychain.
+    // On failure the plaintext copy stays put and migration retries next load.
+    try {
+      const migrated = migrateApiKeyToSecretStorage(this.app, this.app.secretStorage, this.settings.apiKeySecret);
+      if (migrated !== null) {
+        this.settings.apiKeySecret = migrated;
+        await this.saveSettings();
+      }
+    } catch (err) {
+      console.warn("Azer: API-key keychain migration failed; will retry on next load.", err);
+    }
     this.ports = makeObsidianPorts(this.app);
 
     registerAzerTable(this);

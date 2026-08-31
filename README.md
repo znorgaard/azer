@@ -115,10 +115,12 @@ See Anthropic's [Get started guide](https://docs.anthropic.com/en/api/getting-st
 
 ### Adding it to Azer
 
-**Settings → Community plugins → Azer → Anthropic API key**, then paste the key.
+**Settings → Community plugins → Azer → Anthropic API key**, then pick or create the keychain secret that holds your key (an existing `anthropic` secret from another plugin works too).
 
-- The key is stored **only on this device** (Obsidian's app-local storage, outside the vault), so no sync mechanism — Obsidian Sync, git, Dropbox, iCloud — ever copies it.
-  Set it on **each** machine you use.
+- The key lives in [Obsidian's keychain](https://docs.obsidian.md/plugins/guides/secret-storage) (**Settings → Keychain**) — **on this device only**, outside the vault, so no sync mechanism — Obsidian Sync, git, Dropbox, iCloud — ever copies it.
+  Secrets are scoped per device and per vault, so set it on **each** machine you use.
+  Azer's own settings store only the secret's *name*.
+- Keys saved by Azer before 0.2.3 are moved into the keychain automatically on the first load, and the old plaintext copy is deleted.
 - **Model** and **Max tokens** in the same settings tab control the requests (defaults: `claude-opus-4-8`, 4096 output tokens).
 
 Run an AI command without a key set and Azer just tells you to add one — nothing

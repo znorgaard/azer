@@ -5,7 +5,7 @@ import { recap } from "../ai/recap";
 import { type AdventureLogNote, forCampaign, selectForRecap, stripFrontmatter } from "../notes/adventureLog";
 import { createTypedNote } from "./newNote";
 import { makeObsidianPorts } from "../obsidianPorts";
-import { getApiKey } from "../settings";
+import { resolveApiKey } from "../settings";
 import { AZER_TYPE_KEY } from "../schema/frontmatter";
 import type { NotePorts } from "../ports";
 import type AzerPlugin from "../main";
@@ -30,9 +30,10 @@ async function obsidianFetch(req: RequestUrlParam): Promise<FetchResult> {
 
 export function registerAiCommands(plugin: AzerPlugin): void {
   // Reads apiKey/model/maxTokens fresh on every call (inside the closure).
+  const apiKey = (): string => resolveApiKey(plugin.app.secretStorage, plugin.settings.apiKeySecret);
   const ask: Complete = (system, user) =>
     complete(obsidianFetch, {
-      apiKey: getApiKey(plugin.app),
+      apiKey: apiKey(),
       model: plugin.settings.model,
       system,
       user,
@@ -40,8 +41,8 @@ export function registerAiCommands(plugin: AzerPlugin): void {
     });
 
   const requireKey = (): boolean => {
-    if (getApiKey(plugin.app).trim() === "") {
-      new Notice("Set your Anthropic API key in Azer settings to use AI features.");
+    if (apiKey() === "") {
+      new Notice("Pick or create your Anthropic API key secret in Azer settings to use AI features.");
       return false;
     }
     return true;
