@@ -100,3 +100,6 @@ so submission stays a formality:
 - **Release** = GitHub release whose tag equals `manifest.json` `version`
   (no `v` prefix), with `main.js`, `manifest.json`, and `styles.css` attached as
   individual assets. The directory reads `manifest.json` from the default branch.
+  Cut releases by pushing the tag and letting the Release workflow build,
+  attest, and draft — never hand-attach locally built assets (attestations
+  only cover CI-built bytes; see CONTRIBUTING.md "Cutting a release").
