@@ -61,9 +61,7 @@ export class AzerSettingTab extends PluginSettingTab {
         heading: LABELS.advanced,
         items: [
           {
-            // Plain-string desc for the search index; the framework caches
-            // these definitions long-lived and DocumentFragments are
-            // single-use, so the linked fragment is swapped in per render.
+            // Plain-string desc for the search index
             ...LABELS.noteTypes,
             render: (setting: Setting) => void setting.setDesc(this.noteTypesDesc()),
           },
